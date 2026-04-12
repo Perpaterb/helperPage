@@ -92,24 +92,25 @@ export function Container({ slotCount, searchQuery }: Props) {
       };
     };
 
-    // 200ms interval: add rows at bottom / scroll at edges
+    // 200ms interval: ONLY fires in the edge zones.
+    // Bottom 15% (cy > 85% of vh): add one row + scroll down.
+    // Top 15% (cy < 15% of vh): scroll up (no row removal).
+    // Middle 70%: nothing happens — item follows cursor freely.
     const interval = setInterval(() => {
       const vh = window.innerHeight;
       const cy = dragCursorY.current;
-      if (cy > vh * 0.85) {
-        // Bottom 15%: add one row and scroll down
+      const bottom = vh * 0.85;
+      const top = vh * 0.15;
+      if (cy >= bottom) {
         setDragRowLock(prev => (prev != null ? prev + 1 : null));
-        window.scrollBy({ top: cellH, behavior: 'instant' as ScrollBehavior });
-      } else if (cy < vh * 0.15 && window.scrollY > 0) {
-        // Top 15%: scroll up (no row removal)
-        window.scrollBy({ top: -cellH, behavior: 'instant' as ScrollBehavior });
+        window.scrollBy(0, cellH);
+      } else if (cy <= top && window.scrollY > 0) {
+        window.scrollBy(0, -cellH);
       }
+      // else: middle 70% — do nothing
     }, 200);
 
-    let lastMove: MouseEvent | null = null;
-
     const move = (ev: MouseEvent) => {
-      lastMove = ev;
       dragCursorY.current = ev.clientY;
       const { x, y } = computeTarget(ev.clientX, ev.clientY);
       const cur = ui.preview;
