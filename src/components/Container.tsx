@@ -1,52 +1,37 @@
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from '../store';
-import { resolveLayout, packItems } from '../layout';
+import { resolveLayout, packItems, availableSize } from '../layout';
 import { buildVirtualState } from '../virtualState';
 import { useUI, Corner } from '../uiContext';
 import { ItemView } from './ItemView';
 import { EditItemModal } from './EditItemModal';
-import { EditCategoryModal } from './EditCategoryModal';
 import { AddItemModal } from './AddItemModal';
 import { SizePos } from '../types';
 import { resolveBg, textColorFor } from '../colors';
 
 interface Props {
-  parentId: string;
   slotCount: number;
-  depth: number;
   searchQuery: string;
 }
 
-export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
+export function Container({ slotCount, searchQuery }: Props) {
   const { state, dispatch } = useStore();
   const ui = useUI();
   const [editItemId, setEditItemId] = useState<string | null>(null);
-  const [editCatId, setEditCatId] = useState<string | null>(null);
   const [addingAt, setAddingAt] = useState<{ x: number; y: number } | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
-  // Virtual state used for rendering only; dispatches still use real state.
   const vState = useMemo(
     () => buildVirtualState(state, ui.drag, ui.preview, slotCount),
     [state, ui.drag, ui.preview, slotCount]
   );
 
-  const catHeight = (catId: string): number => {
-    const cat = vState.categories[catId];
-    if (!cat) return 1;
-    if (cat.collapsed) return 1;
-    const inner = resolveLayout(vState, catId, slotCount, inner => catHeight(inner));
-    return Math.max(1, inner.totalRows) + 1;
-  };
-
   const layout = useMemo(
-    () => resolveLayout(vState, parentId, slotCount, catHeight),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [vState, parentId, slotCount]
+    () => resolveLayout(vState, slotCount),
+    [vState, slotCount]
   );
 
   const isEdit = state.editMode;
-
   const totalRows = Math.max(1, layout.totalRows + (isEdit ? 1 : 0));
 
   // --- Drag & drop ---
@@ -76,31 +61,16 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
     const offsetRow = Math.max(0, Math.min(sp.h - 1, Math.floor((e.clientY - rect.top) / cellH)));
     e.dataTransfer.setData('text/hp-id', id);
     e.dataTransfer.effectAllowed = 'move';
-    // Align drag image with cursor offset so the ghost matches the grab point
     try {
       e.dataTransfer.setDragImage(itemEl, e.clientX - rect.left, e.clientY - rect.top);
     } catch {}
     ui.setDrag({
       itemId: id,
-      fromParentId: parentId,
+      fromParentId: 'root',
       offsetCol,
       offsetRow,
       w: sp.w,
       h: sp.h
-    });
-  };
-
-  const onDragStartCategory = (e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData('text/hp-id', id);
-    e.dataTransfer.effectAllowed = 'move';
-    // Categories are full-width; no preview offset needed
-    ui.setDrag({
-      itemId: id,
-      fromParentId: parentId,
-      offsetCol: 0,
-      offsetRow: 0,
-      w: slotCount,
-      h: 1
     });
   };
 
@@ -110,16 +80,14 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
     const drag = ui.drag;
-    if (!drag) return;
-    // Only preview for items (categories drop as-is)
-    if (!state.items[drag.itemId]) return;
+    if (!drag || !state.items[drag.itemId]) return;
     const cell = cellFromEvent(e);
     if (!cell) return;
     const targetX = Math.max(0, Math.min(slotCount - drag.w, cell.col - drag.offsetCol));
     const targetY = Math.max(0, cell.row - drag.offsetRow);
     const cur = ui.preview;
-    if (!cur || cur.parentId !== parentId || cur.x !== targetX || cur.y !== targetY) {
-      ui.setPreview({ parentId, x: targetX, y: targetY });
+    if (!cur || cur.parentId !== 'root' || cur.x !== targetX || cur.y !== targetY) {
+      ui.setPreview({ parentId: 'root', x: targetX, y: targetY });
     }
   };
 
@@ -129,48 +97,22 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
     e.stopPropagation();
     const id = e.dataTransfer.getData('text/hp-id');
     const drag = ui.drag;
-    if (!id || !drag) {
+    if (!id || !drag || !state.items[id]) {
       ui.setDrag(null);
       ui.setPreview(null);
       return;
     }
-    const item = state.items[id];
-    const cat = state.categories[id];
-    if (item) {
-      const cell = cellFromEvent(e);
-      const targetX = cell
-        ? Math.max(0, Math.min(slotCount - drag.w, cell.col - drag.offsetCol))
-        : ui.preview?.x ?? 0;
-      const targetY = cell ? Math.max(0, cell.row - drag.offsetRow) : ui.preview?.y ?? 0;
-      if (drag.fromParentId !== parentId) {
-        dispatch({
-          type: 'MOVE_CHILD',
-          id,
-          toParentId: parentId,
-          toIndex: (state.childOrder[parentId] || []).length
-        });
-      }
-      dispatch({
-        type: 'SET_ITEM_LAYOUT',
-        id,
-        slotCount,
-        sp: { x: targetX, y: targetY, w: drag.w, h: drag.h }
-      });
-    } else if (cat) {
-      const cell = cellFromEvent(e);
-      dispatch({
-        type: 'MOVE_CHILD',
-        id,
-        toParentId: parentId,
-        toIndex: (state.childOrder[parentId] || []).length
-      });
-      dispatch({
-        type: 'SET_CATEGORY_LAYOUT',
-        id,
-        slotCount,
-        y: cell?.row ?? 0
-      });
-    }
+    const cell = cellFromEvent(e);
+    const targetX = cell
+      ? Math.max(0, Math.min(slotCount - drag.w, cell.col - drag.offsetCol))
+      : ui.preview?.x ?? 0;
+    const targetY = cell ? Math.max(0, cell.row - drag.offsetRow) : ui.preview?.y ?? 0;
+    dispatch({
+      type: 'SET_ITEM_LAYOUT',
+      id,
+      slotCount,
+      sp: { x: targetX, y: targetY, w: drag.w, h: drag.h }
+    });
     ui.setDrag(null);
     ui.setPreview(null);
   };
@@ -262,8 +204,6 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
     );
   };
 
-  // When searching, repack only matching items (same w×h, new positions
-  // packed top-left) so results collapse upward without gaps.
   const searchLayout = useMemo(() => {
     if (!searchQuery) return null;
     const matching: { id: string; w: number; h: number }[] = [];
@@ -293,15 +233,8 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
         }
       }
     }
-    if (!searchQuery) {
-      for (const [, cr] of Object.entries(layout.categories)) {
-        for (let r = cr.y; r < cr.y + cr.h && r < rows; r++) {
-          for (let c = 0; c < slotCount; c++) grid[r][c] = true;
-        }
-      }
-    }
     return grid;
-  }, [displayItems, displayTotalRows, layout.categories, slotCount, searchQuery]);
+  }, [displayItems, displayTotalRows, slotCount]);
 
   const containerStyle: React.CSSProperties = {
     gridTemplateColumns: `repeat(${slotCount}, 1fr)`,
@@ -348,83 +281,6 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
         );
       })}
 
-      {!searchQuery && Object.entries(layout.categories).map(([id, cr]) => {
-        const cat = vState.categories[id];
-        if (!cat) return null;
-        return (
-          <div
-            key={id}
-            className={'category depth-' + depth + (cat.collapsed ? ' collapsed' : '')}
-            style={{
-              gridColumn: `1 / span ${slotCount}`,
-              gridRow: `${cr.y + 1} / span ${cr.h}`,
-              background: cat.color + (cat.color.length === 7 ? 'e6' : ''),
-              borderColor: cat.color
-            }}
-            draggable={isEdit && !ui.resizeMode}
-            onDragStart={e => {
-              e.stopPropagation();
-              onDragStartCategory(e, id);
-            }}
-            onDragEnd={onDragEndItem}
-          >
-            <div
-              className="category-header"
-              style={{ background: cat.color }}
-              onClick={() => {
-                if (!isEdit && !ui.resizeMode) {
-                  dispatch({
-                    type: 'UPDATE_CATEGORY',
-                    id,
-                    patch: { collapsed: !cat.collapsed }
-                  });
-                }
-              }}
-            >
-              <span className="category-name">
-                {cat.collapsed ? '▶' : '▼'} {cat.name}
-              </span>
-              {isEdit && !ui.resizeMode && (
-                <div className="category-actions">
-                  <button
-                    className="icon-btn"
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={e => {
-                      e.stopPropagation();
-                      setEditCatId(id);
-                    }}
-                    title="Edit"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    className="icon-btn"
-                    onMouseDown={e => e.stopPropagation()}
-                    onClick={e => {
-                      e.stopPropagation();
-                      dispatch({ type: 'RESET_LAYOUTS', parentId: id, slotCount });
-                    }}
-                    title="Reset layout at this width"
-                  >
-                    ⟲
-                  </button>
-                </div>
-              )}
-            </div>
-            {!cat.collapsed && depth < 5 && (
-              <div className="category-inner">
-                <Container
-                  parentId={id}
-                  slotCount={slotCount}
-                  depth={depth + 1}
-                  searchQuery={searchQuery}
-                />
-              </div>
-            )}
-          </div>
-        );
-      })}
-
       {isEdit &&
         !ui.resizeMode &&
         !ui.drag &&
@@ -457,25 +313,16 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
           }}
         />
       )}
-      {editCatId && (
-        <EditCategoryModal
-          catId={editCatId}
-          onClose={() => setEditCatId(null)}
-          onDelete={() => {
-            dispatch({ type: 'DELETE_CATEGORY', id: editCatId });
-            setEditCatId(null);
-          }}
-        />
-      )}
       {addingAt && (
         <AddItemModal
           onPick={type => {
+            const size = availableSize(addingAt.x, addingAt.y, slotCount, occupied);
             dispatch({
               type: 'ADD_ITEM',
-              parentId,
               itemType: type,
               slotCount,
-              position: addingAt
+              position: addingAt,
+              size
             });
             setAddingAt(null);
           }}

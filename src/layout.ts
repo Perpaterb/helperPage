@@ -1,24 +1,16 @@
 import { AppState, SizePos } from './types';
 
-// Given a parent container and slot count, produce the resolved layout:
-// - items get x,y,w,h; categories get y and height (computed recursively)
-// Returns: { resolvedItems: {id: SizePos}, categoryRows: {id: {y, h}}, totalRows }
 export interface ResolvedLayout {
   items: Record<string, SizePos>;
-  categories: Record<string, { y: number; h: number }>;
   totalRows: number;
 }
 
-// Simple packer: walks through childOrder, categories break rows and take full width,
-// items try to sit at their explicit (x,y,w,h) if set; otherwise packed into next free cells.
 export function resolveLayout(
   state: AppState,
-  parentId: string,
-  slotCount: number,
-  getCategoryHeight: (catId: string) => number
+  slotCount: number
 ): ResolvedLayout {
-  const order = state.childOrder[parentId] || [];
-  const occupied: boolean[][] = []; // [row][col]
+  const order = state.childOrder.root || [];
+  const occupied: boolean[][] = [];
 
   const ensureRow = (r: number) => {
     while (occupied.length <= r) occupied.push(new Array(slotCount).fill(false));
@@ -41,8 +33,8 @@ export function resolveLayout(
       }
     }
   };
-  const findNext = (w: number, h: number, startRow = 0): { x: number; y: number } => {
-    let r = startRow;
+  const findNext = (w: number, h: number): { x: number; y: number } => {
+    let r = 0;
     while (true) {
       ensureRow(r);
       for (let c = 0; c + w <= slotCount; c++) {
@@ -54,113 +46,45 @@ export function resolveLayout(
   };
 
   const items: Record<string, SizePos> = {};
-  const cats: Record<string, { y: number; h: number }> = {};
 
-  // Separate items with explicit layouts vs defaults.
-  // Place explicit first so collisions with packed get pushed.
-  const explicitItems: { id: string; sp: SizePos }[] = [];
-  const defaultItems: { id: string; w: number; h: number }[] = [];
-  const explicitCats: { id: string; y: number }[] = [];
-  const defaultCats: string[] = [];
-
+  // Place items with explicit layouts first (in childOrder)
   for (const cid of order) {
     const it = state.items[cid];
-    const ct = state.categories[cid];
-    if (it) {
-      const lay = it.layouts[slotCount];
-      if (lay) explicitItems.push({ id: cid, sp: lay });
-      else {
-        // fallback: use last-known size if any, else 1x1
-        const sizes = Object.values(it.layouts).filter(Boolean) as SizePos[];
-        const last = sizes[sizes.length - 1];
-        defaultItems.push({ id: cid, w: last?.w ? Math.min(last.w, slotCount) : 3, h: last?.h || 3 });
-      }
-    } else if (ct) {
-      const lay = ct.layouts[slotCount];
-      if (lay) explicitCats.push({ id: cid, y: lay.y });
-      else defaultCats.push(cid);
-    }
-  }
-
-  // Place explicit items (clamped to bounds)
-  for (const { id, sp } of explicitItems) {
-    const w = Math.max(1, Math.min(sp.w, slotCount));
-    const h = Math.max(1, sp.h);
-    let x = Math.max(0, Math.min(sp.x, slotCount - w));
-    let y = Math.max(0, sp.y);
-    // Find free spot starting at (x,y) scanning downward if collision
-    let placed = false;
-    for (let attempt = 0; attempt < 200 && !placed; attempt++) {
-      if (isFree(x, y, w, h)) {
-        placed = true;
-      } else {
-        y++;
-      }
+    if (!it) continue;
+    const lay = it.layouts[slotCount];
+    if (!lay) continue;
+    const w = Math.max(1, Math.min(lay.w, slotCount));
+    const h = Math.max(1, lay.h);
+    let x = Math.max(0, Math.min(lay.x, slotCount - w));
+    let y = Math.max(0, lay.y);
+    for (let attempt = 0; attempt < 200; attempt++) {
+      if (isFree(x, y, w, h)) break;
+      y++;
     }
     mark(x, y, w, h);
-    items[id] = { x, y, w, h };
+    items[cid] = { x, y, w, h };
   }
 
-  // Now process in childOrder, mixing defaults with explicit cats inline
+  // Pack remaining items (no explicit layout at this slot count)
   for (const cid of order) {
-    if (items[cid]) continue; // already placed (explicit)
+    if (items[cid]) continue;
     const it = state.items[cid];
-    const ct = state.categories[cid];
-    if (it) {
-      // default item: pack
-      const sizes = Object.values(it.layouts).filter(Boolean) as SizePos[];
-      const last = sizes[sizes.length - 1];
-      const w = last?.w ? Math.min(last.w, slotCount) : 1;
-      const h = last?.h || 1;
-      const { x, y } = findNext(w, h);
-      mark(x, y, w, h);
-      items[cid] = { x, y, w, h };
-    } else if (ct) {
-      // categories full-width break row
-      const h = Math.max(1, getCategoryHeight(cid));
-      // Find next row where full-width block is free
-      let r = 0;
-      ensureRow(r);
-      while (true) {
-        let clear = true;
-        for (let c = 0; c < slotCount; c++) {
-          ensureRow(r);
-          if (occupied[r][c]) {
-            clear = false;
-            break;
-          }
-        }
-        if (clear) {
-          let allClear = true;
-          for (let rr = r; rr < r + h && allClear; rr++) {
-            ensureRow(rr);
-            for (let cc = 0; cc < slotCount; cc++) {
-              if (occupied[rr][cc]) {
-                allClear = false;
-                break;
-              }
-            }
-          }
-          if (allClear) break;
-        }
-        r++;
-      }
-      for (let rr = r; rr < r + h; rr++) {
-        ensureRow(rr);
-        for (let cc = 0; cc < slotCount; cc++) occupied[rr][cc] = true;
-      }
-      cats[cid] = { y: r, h };
-    }
+    if (!it) continue;
+    const sizes = Object.values(it.layouts).filter(Boolean) as SizePos[];
+    const last = sizes[sizes.length - 1];
+    const w = last?.w ? Math.min(last.w, slotCount) : 3;
+    const h = last?.h || 3;
+    const { x, y } = findNext(w, h);
+    mark(x, y, w, h);
+    items[cid] = { x, y, w, h };
   }
 
-  return { items, categories: cats, totalRows: occupied.length };
+  return { items, totalRows: occupied.length };
 }
 
-// Pack a list of items top-left (preserving each item's w×h) into a
-// grid of `slotCount` columns.  Used when search filters items so the
-// visible results collapse upward without gaps.
+// Pack a filtered list of items top-left (preserving w×h).
 export function packItems(
-  items: { id: string; w: number; h: number }[],
+  itemList: { id: string; w: number; h: number }[],
   slotCount: number
 ): { items: Record<string, SizePos>; totalRows: number } {
   const occupied: boolean[][] = [];
@@ -186,7 +110,7 @@ export function packItems(
       }
     }
   };
-  for (const item of items) {
+  for (const item of itemList) {
     const w = Math.min(item.w, slotCount);
     let r = 0;
     let placed = false;
@@ -207,12 +131,34 @@ export function packItems(
   return { items: result, totalRows: occupied.length };
 }
 
-// Figure out slot count based on board width in px.
-// 3x density: slots are 1/3 the original size for finer positioning.
-//   1080p viewport -> board ~1440 -> 12 slots
-//   1440p viewport -> board ~1920 -> 18 slots
-//   ultrawide 3440 -> board ~2580 -> 24 slots
-//   4K 3840       -> board ~2880 -> 30 slots
+// Compute available space (up to 3×3) at a target position.
+export function availableSize(
+  x: number,
+  y: number,
+  slotCount: number,
+  occupied: boolean[][]
+): { w: number; h: number } {
+  let maxW = 0;
+  for (let c = x; c < Math.min(x + 3, slotCount); c++) {
+    if (occupied[y]?.[c]) break;
+    maxW++;
+  }
+  if (maxW === 0) return { w: 1, h: 1 };
+  let maxH = 0;
+  for (let r = y; r < y + 3; r++) {
+    let rowClear = true;
+    for (let c = x; c < x + maxW; c++) {
+      if (occupied[r]?.[c]) {
+        rowClear = false;
+        break;
+      }
+    }
+    if (!rowClear) break;
+    maxH++;
+  }
+  return { w: Math.max(1, maxW), h: Math.max(1, maxH) };
+}
+
 export function slotsForWidth(boardWidthPx: number, depth: number): number {
   const w = boardWidthPx;
   let s: number;

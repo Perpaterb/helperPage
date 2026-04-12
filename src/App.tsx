@@ -64,7 +64,7 @@ function AppShell() {
           ref={boardRef}
           style={{ ['--slot-count' as any]: slotCount }}
         >
-          <Container parentId="root" slotCount={slotCount} depth={0} searchQuery={query} />
+          <Container slotCount={slotCount} searchQuery={query} />
         </div>
       </div>
     </div>
