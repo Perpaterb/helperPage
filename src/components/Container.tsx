@@ -52,8 +52,13 @@ export function Container({ slotCount, searchQuery }: Props) {
     const x = (e as any).clientX - rect.left;
     const y = (e as any).clientY - rect.top;
     const col = Math.floor((x / rect.width) * slotCount);
-    const rowHeight = rect.height / Math.max(1, totalRows);
-    const row = Math.floor(y / rowHeight);
+    // Use actual CSS slot size + gap to compute row, not totalRows division.
+    // This prevents huge jumps when the cursor overshoots a small grid.
+    const style = getComputedStyle(gridRef.current);
+    const slotPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
+    const gap = parseFloat(style.rowGap || style.gap || '4');
+    const rowPitch = slotPx + gap;
+    const row = Math.floor(y / rowPitch);
     return {
       col: Math.max(0, Math.min(slotCount - 1, col)),
       row: Math.max(0, row)
@@ -141,7 +146,9 @@ export function Container({ slotCount, searchQuery }: Props) {
       layout.items[id] || item.layouts[slotCount] || { x: 0, y: 0, w: 1, h: 1 };
     const rect = gridRef.current.getBoundingClientRect();
     const cellW = rect.width / slotCount;
-    const cellH = rect.height / Math.max(1, totalRows);
+    const slotPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
+    const gapPx = parseFloat(getComputedStyle(gridRef.current).rowGap || getComputedStyle(gridRef.current).gap || '4');
+    const cellH = slotPx + gapPx;
     const startX = startEv.clientX;
     const startY = startEv.clientY;
     const start = { ...cur };
@@ -231,9 +238,12 @@ export function Container({ slotCount, searchQuery }: Props) {
   }, [searchQuery, layout, slotCount]);
 
   const displayItems = searchLayout ? searchLayout.items : layout.items;
-  const displayTotalRows = searchLayout
+  // Add buffer rows during drag/resize so the grid extends and gives
+  // the user somewhere to drop or stretch items into.
+  const bufferRows = (ui.drag || ui.activeResize) ? 20 : 0;
+  const displayTotalRows = (searchLayout
     ? Math.max(1, searchLayout.totalRows + (isEdit ? 1 : 0))
-    : totalRows;
+    : totalRows) + bufferRows;
 
   const occupied = useMemo(() => {
     const rows = displayTotalRows;
