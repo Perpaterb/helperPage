@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { StoreProvider, useStore } from './store';
+import { UIProvider, useUI } from './uiContext';
 import { BurgerMenu } from './components/BurgerMenu';
 import { Container } from './components/Container';
 import { slotsForWidth } from './layout';
 
 function AppShell() {
   const { state, dispatch } = useStore();
+  const ui = useUI();
   const [query, setQuery] = useState('');
   const boardRef = useRef<HTMLDivElement | null>(null);
   const [slotCount, setSlotCount] = useState(4);
@@ -30,8 +32,14 @@ function AppShell() {
     document.documentElement.dataset.theme = state.darkMode ? 'dark' : 'light';
   }, [state.darkMode]);
 
+  // Exit resize mode whenever edit mode is turned off
+  useEffect(() => {
+    if (!state.editMode && ui.resizeMode) ui.setResizeMode(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.editMode]);
+
   return (
-    <div className="page">
+    <div className={'page' + (ui.resizeMode ? ' resize-active' : '')}>
       <div className="top-bar">
         <BurgerMenu />
         <input
@@ -45,10 +53,19 @@ function AppShell() {
       </div>
       {state.editMode && (
         <div className="new-cat-bar">
-          <button className="new-cat-btn" onClick={() => dispatch({ type: 'ADD_CATEGORY' })}>
+          <button
+            className="new-cat-btn"
+            onClick={() => dispatch({ type: 'ADD_CATEGORY' })}
+            disabled={ui.resizeMode}
+          >
             + New category
           </button>
           <span className="slot-info">Slot width: {slotCount}</span>
+          {ui.resizeMode && (
+            <button className="exit-resize-btn" onClick={() => ui.setResizeMode(false)}>
+              ✓ Exit resize mode
+            </button>
+          )}
         </div>
       )}
       <div className="board-wrap">
@@ -67,7 +84,9 @@ function AppShell() {
 export default function App() {
   return (
     <StoreProvider>
-      <AppShell />
+      <UIProvider>
+        <AppShell />
+      </UIProvider>
     </StoreProvider>
   );
 }

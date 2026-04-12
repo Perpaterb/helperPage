@@ -3,35 +3,39 @@ import { TodoItem } from '../items/TodoItem';
 import { NotesItem } from '../items/NotesItem';
 import { Item, ButtonData, TodoData, NotesData } from '../types';
 import { useStore } from '../store';
+import { Corner } from '../uiContext';
 
 interface Props {
   item: Item;
   editMode: boolean;
   resizeMode: boolean;
+  isDragging: boolean;
+  activeCorner: Corner | null;
   onEdit: () => void;
   onStartResize: () => void;
-  onConfirmResize: () => void;
+  onExitResize: () => void;
   onDragStart: (e: React.DragEvent) => void;
-  onResizeHandle: (dir: 'r' | 'b' | 'br', ev: React.MouseEvent) => void;
-  hidden?: boolean;
+  onDragEnd: () => void;
+  onResizeCornerDown: (corner: Corner, ev: React.MouseEvent) => void;
   style?: React.CSSProperties;
-  className?: string;
 }
 
 export function ItemView({
   item,
   editMode,
   resizeMode,
+  isDragging,
+  activeCorner,
   onEdit,
   onStartResize,
-  onConfirmResize,
+  onExitResize,
   onDragStart,
-  onResizeHandle,
-  hidden,
-  style,
-  className
+  onDragEnd,
+  onResizeCornerDown,
+  style
 }: Props) {
   const { dispatch } = useStore();
+  const blocked = editMode || resizeMode;
 
   let inner: React.ReactNode = null;
   if (item.type === 'button') {
@@ -52,27 +56,30 @@ export function ItemView({
     );
   }
 
+  const cls =
+    'item type-' +
+    item.type +
+    (editMode ? ' edit' : '') +
+    (resizeMode ? ' resize' : '') +
+    (isDragging ? ' dragging' : '');
+
   return (
     <div
-      className={
-        'item ' +
-        ('type-' + item.type) +
-        (editMode ? ' edit' : '') +
-        (resizeMode ? ' resize' : '') +
-        (hidden ? ' hidden' : '') +
-        (className ? ' ' + className : '')
-      }
+      className={cls}
       style={style}
       draggable={editMode && !resizeMode}
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       data-item-id={item.id}
     >
-      {inner}
+      <div className={'item-content' + (blocked ? ' blocked' : '')}>{inner}</div>
+
       {editMode && !resizeMode && (
         <div className="item-actions">
           <button
             className="icon-btn"
             title="Edit"
+            onMouseDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation();
               onEdit();
@@ -83,6 +90,7 @@ export function ItemView({
           <button
             className="icon-btn"
             title="Resize"
+            onMouseDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation();
               onStartResize();
@@ -92,34 +100,26 @@ export function ItemView({
           </button>
         </div>
       )}
+
       {resizeMode && (
         <>
-          <div
-            className="resize-handle r"
-            onMouseDown={e => {
-              e.stopPropagation();
-              onResizeHandle('r', e);
-            }}
-          />
-          <div
-            className="resize-handle b"
-            onMouseDown={e => {
-              e.stopPropagation();
-              onResizeHandle('b', e);
-            }}
-          />
-          <div
-            className="resize-handle br"
-            onMouseDown={e => {
-              e.stopPropagation();
-              onResizeHandle('br', e);
-            }}
-          />
+          {(['tl', 'tr', 'bl', 'br'] as const).map(c => (
+            <div
+              key={c}
+              className={'corner-handle ' + c + (activeCorner === c ? ' active' : '')}
+              onMouseDown={e => {
+                e.stopPropagation();
+                e.preventDefault();
+                onResizeCornerDown(c, e);
+              }}
+            />
+          ))}
           <button
             className="resize-confirm"
+            onMouseDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation();
-              onConfirmResize();
+              onExitResize();
             }}
             title="Done"
           >
