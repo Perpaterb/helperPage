@@ -92,15 +92,14 @@ export function Container({ slotCount, searchQuery }: Props) {
       };
     };
 
-    // 200ms interval: edge zones only.
-    // Bottom 15%: add one row + scroll down.
-    // Top 80px: scroll up (no row removal).
-    // Everything else: item follows cursor, nothing scrolls.
+    // 200ms interval: only the bottom 15% and top 80px trigger scroll.
     const TOP_EDGE_PX = 80;
+    const scrollLock = { enabled: true };
     const interval = setInterval(() => {
+      if (!scrollLock.enabled) return;
       const vh = window.innerHeight;
       const cy = dragCursorY.current;
-      if (cy >= vh * 0.85) {
+      if (cy >= Math.floor(vh * 0.85)) {
         setDragRowLock(prev => (prev != null ? prev + 1 : null));
         window.scrollBy(0, cellH);
       } else if (cy <= TOP_EDGE_PX && window.scrollY > 0) {

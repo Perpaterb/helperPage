@@ -44,6 +44,23 @@ body {
   min-height: 100%;
   padding-bottom: 40px;
 }
+.page.dragging::before,
+.page.dragging::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: red;
+  z-index: 9999;
+  pointer-events: none;
+}
+.page.dragging::before {
+  top: 80px;
+}
+.page.dragging::after {
+  bottom: 15vh;
+}
 
 .top-bar {
   position: sticky;
@@ -666,6 +683,7 @@ body {
 }
 .container-grid {
   overflow: visible;
+  overflow-anchor: none;
 }
 .category.collapsed {
   min-height: 0;

@@ -102,7 +102,7 @@ function AppShell() {
   const onBoardPointerLeave = useCallback(() => clearLongPress(), [clearLongPress]);
 
   return (
-    <div className={'page' + (ui.resizeMode ? ' resize-active' : '')}>
+    <div className={'page' + (ui.resizeMode ? ' resize-active' : '') + (ui.drag ? ' dragging' : '')}>
       <div className="top-bar">
         <BurgerMenu />
         <label className="theme-toggle" title={state.darkMode ? 'Switch to light' : 'Switch to dark'}>
