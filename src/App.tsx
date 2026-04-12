@@ -51,21 +51,11 @@ function AppShell() {
         />
         <div className="top-spacer" />
       </div>
-      {state.editMode && (
+      {state.editMode && ui.resizeMode && (
         <div className="new-cat-bar">
-          <button
-            className="new-cat-btn"
-            onClick={() => dispatch({ type: 'ADD_CATEGORY' })}
-            disabled={ui.resizeMode}
-          >
-            + New category
+          <button className="exit-resize-btn" onClick={() => ui.setResizeMode(false)}>
+            ✓ Exit resize mode
           </button>
-          <span className="slot-info">Slot width: {slotCount}</span>
-          {ui.resizeMode && (
-            <button className="exit-resize-btn" onClick={() => ui.setResizeMode(false)}>
-              ✓ Exit resize mode
-            </button>
-          )}
         </div>
       )}
       <div className="board-wrap">

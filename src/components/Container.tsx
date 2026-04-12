@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from '../store';
-import { resolveLayout } from '../layout';
+import { resolveLayout, packItems } from '../layout';
 import { buildVirtualState } from '../virtualState';
 import { useUI, Corner } from '../uiContext';
 import { ItemView } from './ItemView';
@@ -46,26 +46,6 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
   );
 
   const isEdit = state.editMode;
-
-  const occupied = useMemo(() => {
-    const rows = layout.totalRows + (isEdit ? 1 : 0);
-    const grid: boolean[][] = Array.from({ length: rows }, () =>
-      new Array(slotCount).fill(false)
-    );
-    for (const [, sp] of Object.entries(layout.items)) {
-      for (let r = sp.y; r < sp.y + sp.h && r < rows; r++) {
-        for (let c = sp.x; c < sp.x + sp.w && c < slotCount; c++) {
-          grid[r][c] = true;
-        }
-      }
-    }
-    for (const [, cr] of Object.entries(layout.categories)) {
-      for (let r = cr.y; r < cr.y + cr.h && r < rows; r++) {
-        for (let c = 0; c < slotCount; c++) grid[r][c] = true;
-      }
-    }
-    return grid;
-  }, [layout, slotCount, isEdit]);
 
   const totalRows = Math.max(1, layout.totalRows + (isEdit ? 1 : 0));
 
@@ -267,32 +247,65 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
     window.addEventListener('mouseup', up);
   };
 
-  const containerStyle: React.CSSProperties = {
-    gridTemplateColumns: `repeat(${slotCount}, 1fr)`,
-    gridTemplateRows: `repeat(${totalRows}, var(--slot-size))`
-  };
-
-  const matchesSearch = (id: string): boolean => {
+  const itemMatchesSearch = (id: string): boolean => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const it = state.items[id];
-    if (it) {
-      const data: any = it.data;
-      return (
-        (data.text || '').toLowerCase().includes(q) ||
-        (data.url || '').toLowerCase().includes(q) ||
-        (data.title || '').toLowerCase().includes(q) ||
-        (data.markdown || '').toLowerCase().includes(q) ||
-        (data.entries || []).some((e: any) => e.text.toLowerCase().includes(q))
-      );
+    if (!it) return false;
+    const data: any = it.data;
+    return (
+      (data.text || '').toLowerCase().includes(q) ||
+      (data.url || '').toLowerCase().includes(q) ||
+      (data.title || '').toLowerCase().includes(q) ||
+      (data.markdown || '').toLowerCase().includes(q) ||
+      (data.entries || []).some((e: any) => e.text.toLowerCase().includes(q))
+    );
+  };
+
+  // When searching, repack only matching items (same w×h, new positions
+  // packed top-left) so results collapse upward without gaps.
+  const searchLayout = useMemo(() => {
+    if (!searchQuery) return null;
+    const matching: { id: string; w: number; h: number }[] = [];
+    for (const [id, sp] of Object.entries(layout.items)) {
+      if (itemMatchesSearch(id)) {
+        matching.push({ id, w: sp.w, h: sp.h });
+      }
     }
-    const ct = state.categories[id];
-    if (ct) {
-      if (ct.name.toLowerCase().includes(q)) return true;
-      const kids = state.childOrder[id] || [];
-      return kids.some(k => matchesSearch(k));
+    return packItems(matching, slotCount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, layout, slotCount]);
+
+  const displayItems = searchLayout ? searchLayout.items : layout.items;
+  const displayTotalRows = searchLayout
+    ? Math.max(1, searchLayout.totalRows + (isEdit ? 1 : 0))
+    : totalRows;
+
+  const occupied = useMemo(() => {
+    const rows = displayTotalRows;
+    const grid: boolean[][] = Array.from({ length: rows }, () =>
+      new Array(slotCount).fill(false)
+    );
+    for (const [, sp] of Object.entries(displayItems)) {
+      for (let r = sp.y; r < sp.y + sp.h && r < rows; r++) {
+        for (let c = sp.x; c < sp.x + sp.w && c < slotCount; c++) {
+          grid[r][c] = true;
+        }
+      }
     }
-    return true;
+    if (!searchQuery) {
+      for (const [, cr] of Object.entries(layout.categories)) {
+        for (let r = cr.y; r < cr.y + cr.h && r < rows; r++) {
+          for (let c = 0; c < slotCount; c++) grid[r][c] = true;
+        }
+      }
+    }
+    return grid;
+  }, [displayItems, displayTotalRows, layout.categories, slotCount, searchQuery]);
+
+  const containerStyle: React.CSSProperties = {
+    gridTemplateColumns: `repeat(${slotCount}, 1fr)`,
+    gridTemplateRows: `repeat(${displayTotalRows}, var(--slot-size))`
   };
 
   return (
@@ -303,10 +316,9 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      {Object.entries(layout.items).map(([id, sp]) => {
+      {Object.entries(displayItems).map(([id, sp]) => {
         const item = vState.items[id];
         if (!item) return null;
-        if (!matchesSearch(id)) return null;
         const isDragging = ui.drag?.itemId === id;
         const activeCorner =
           ui.activeResize?.itemId === id ? ui.activeResize.corner : null;
@@ -336,10 +348,9 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
         );
       })}
 
-      {Object.entries(layout.categories).map(([id, cr]) => {
+      {!searchQuery && Object.entries(layout.categories).map(([id, cr]) => {
         const cat = vState.categories[id];
         if (!cat) return null;
-        if (!matchesSearch(id)) return null;
         return (
           <div
             key={id}

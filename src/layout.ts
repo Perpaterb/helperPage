@@ -156,6 +156,57 @@ export function resolveLayout(
   return { items, categories: cats, totalRows: occupied.length };
 }
 
+// Pack a list of items top-left (preserving each item's w×h) into a
+// grid of `slotCount` columns.  Used when search filters items so the
+// visible results collapse upward without gaps.
+export function packItems(
+  items: { id: string; w: number; h: number }[],
+  slotCount: number
+): { items: Record<string, SizePos>; totalRows: number } {
+  const occupied: boolean[][] = [];
+  const result: Record<string, SizePos> = {};
+  const ensureRow = (r: number) => {
+    while (occupied.length <= r) occupied.push(new Array(slotCount).fill(false));
+  };
+  const isFree = (x: number, y: number, w: number, h: number) => {
+    for (let rr = y; rr < y + h; rr++) {
+      for (let cc = x; cc < x + w; cc++) {
+        if (cc >= slotCount) return false;
+        ensureRow(rr);
+        if (occupied[rr][cc]) return false;
+      }
+    }
+    return true;
+  };
+  const mark = (x: number, y: number, w: number, h: number) => {
+    for (let rr = y; rr < y + h; rr++) {
+      for (let cc = x; cc < x + w; cc++) {
+        ensureRow(rr);
+        occupied[rr][cc] = true;
+      }
+    }
+  };
+  for (const item of items) {
+    const w = Math.min(item.w, slotCount);
+    let r = 0;
+    let placed = false;
+    while (!placed) {
+      ensureRow(r);
+      for (let c = 0; c + w <= slotCount; c++) {
+        if (isFree(c, r, w, item.h)) {
+          mark(c, r, w, item.h);
+          result[item.id] = { x: c, y: r, w, h: item.h };
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) r++;
+      if (r > 500) break;
+    }
+  }
+  return { items: result, totalRows: occupied.length };
+}
+
 // Figure out slot count based on board width in px.
 // 3x density: slots are 1/3 the original size for finer positioning.
 //   1080p viewport -> board ~1440 -> 12 slots
