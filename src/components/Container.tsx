@@ -8,6 +8,7 @@ import { EditItemModal } from './EditItemModal';
 import { AddItemModal } from './AddItemModal';
 import { SizePos } from '../types';
 import { resolveBg, textColorFor } from '../colors';
+import { startEdgeScroll, stopEdgeScroll, updateEdgeScroll } from '../edgeScroll';
 
 interface Props {
   slotCount: number;
@@ -145,8 +146,10 @@ export function Container({ slotCount, searchQuery }: Props) {
     const startY = startEv.clientY;
     const start = { ...cur };
     ui.setActiveResize({ itemId: id, corner });
+    startEdgeScroll();
 
     const move = (ev: MouseEvent) => {
+      updateEdgeScroll(ev.clientY);
       const dxC = Math.round((ev.clientX - startX) / cellW);
       const dyC = Math.round((ev.clientY - startY) / cellH);
       let nx = start.x;
@@ -193,6 +196,7 @@ export function Container({ slotCount, searchQuery }: Props) {
     const up = () => {
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
+      stopEdgeScroll();
       ui.setActiveResize(null);
     };
     window.addEventListener('mousemove', move);

@@ -4,6 +4,7 @@ import { UIProvider, useUI } from './uiContext';
 import { BurgerMenu } from './components/BurgerMenu';
 import { Container } from './components/Container';
 import { slotsForWidth } from './layout';
+import { startEdgeScroll, stopEdgeScroll, updateEdgeScroll } from './edgeScroll';
 
 const LONG_PRESS_MS = 500;
 
@@ -41,6 +42,21 @@ function AppShell() {
     if (!state.editMode && ui.resizeMode) ui.setResizeMode(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.editMode]);
+
+  // Edge-scroll during drag: feed cursor Y from global dragover
+  useEffect(() => {
+    if (!ui.drag) {
+      stopEdgeScroll();
+      return;
+    }
+    const onDragOver = (e: DragEvent) => updateEdgeScroll(e.clientY);
+    startEdgeScroll();
+    window.addEventListener('dragover', onDragOver);
+    return () => {
+      stopEdgeScroll();
+      window.removeEventListener('dragover', onDragOver);
+    };
+  }, [ui.drag]);
 
   // Long-press on board-wrap (blank area) or container-grid (slots)
   const clearLongPress = useCallback(() => {
