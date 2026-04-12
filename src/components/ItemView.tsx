@@ -14,8 +14,7 @@ interface Props {
   onEdit: () => void;
   onStartResize: () => void;
   onExitResize: () => void;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
+  onMoveStart: (e: React.MouseEvent) => void;
   onResizeCornerDown: (corner: Corner, ev: React.MouseEvent) => void;
   searchQuery?: string;
   style?: React.CSSProperties;
@@ -30,8 +29,7 @@ export function ItemView({
   onEdit,
   onStartResize,
   onExitResize,
-  onDragStart,
-  onDragEnd,
+  onMoveStart,
   onResizeCornerDown,
   searchQuery,
   style
@@ -71,9 +69,11 @@ export function ItemView({
     <div
       className={cls}
       style={style}
-      draggable={editMode && !resizeMode}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      onMouseDown={e => {
+        if (editMode && !resizeMode && e.button === 0) {
+          onMoveStart(e);
+        }
+      }}
       data-item-id={item.id}
     >
       <div className={'item-content' + (blocked ? ' blocked' : '')}>{inner}</div>

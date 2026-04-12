@@ -45,95 +45,71 @@ export function Container({ slotCount, searchQuery }: Props) {
   const isEdit = state.editMode;
   const totalRows = Math.max(1, layout.totalRows + (isEdit ? 1 : 0));
 
-  // --- Drag & drop ---
-  const cellFromEvent = (e: React.DragEvent | React.MouseEvent) => {
-    if (!gridRef.current) return null;
-    const rect = gridRef.current.getBoundingClientRect();
-    const x = (e as any).clientX - rect.left;
-    const y = (e as any).clientY - rect.top;
-    const col = Math.floor((x / rect.width) * slotCount);
-    // Use actual CSS slot size + gap to compute row, not totalRows division.
-    // This prevents huge jumps when the cursor overshoots a small grid.
-    const style = getComputedStyle(gridRef.current);
-    const slotPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
-    const gap = parseFloat(style.rowGap || style.gap || '4');
-    const rowPitch = slotPx + gap;
-    const row = Math.floor(y / rowPitch);
-    return {
-      col: Math.max(0, Math.min(slotCount - 1, col)),
-      row: Math.max(0, row)
-    };
-  };
-
-  const onDragStartItem = (e: React.DragEvent, id: string) => {
+  // --- Mouse-based drag (mirrors resize: delta + scroll compensation) ---
+  const beginDrag = (id: string, startEv: React.MouseEvent) => {
     const item = state.items[id];
-    if (!item) return;
-    const itemEl = e.currentTarget as HTMLElement;
-    const rect = itemEl.getBoundingClientRect();
-    const sp: SizePos = layout.items[id] || { x: 0, y: 0, w: 1, h: 1 };
-    const cellW = rect.width / sp.w;
-    const cellH = rect.height / sp.h;
-    const offsetCol = Math.max(0, Math.min(sp.w - 1, Math.floor((e.clientX - rect.left) / cellW)));
-    const offsetRow = Math.max(0, Math.min(sp.h - 1, Math.floor((e.clientY - rect.top) / cellH)));
-    e.dataTransfer.setData('text/hp-id', id);
-    e.dataTransfer.effectAllowed = 'move';
-    try {
-      e.dataTransfer.setDragImage(itemEl, e.clientX - rect.left, e.clientY - rect.top);
-    } catch {}
+    if (!item || !gridRef.current) return;
+    startEv.preventDefault();
+    const sp: SizePos = layout.items[id] || { x: 0, y: 0, w: 3, h: 3 };
+    const rect = gridRef.current.getBoundingClientRect();
+    const cellW = rect.width / slotCount;
+    const slotPx =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
+    const gapPx =
+      parseFloat(getComputedStyle(gridRef.current).rowGap || getComputedStyle(gridRef.current).gap || '4');
+    const cellH = slotPx + gapPx;
+    const startX = startEv.clientX;
+    const startY = startEv.clientY;
+    const startScrollY = window.scrollY;
+    const startPos = { x: sp.x, y: sp.y };
+
     ui.setDrag({
       itemId: id,
       fromParentId: 'root',
-      offsetCol,
-      offsetRow,
+      offsetCol: 0,
+      offsetRow: 0,
       w: sp.w,
       h: sp.h
     });
-  };
+    ui.setPreview({ parentId: 'root', x: sp.x, y: sp.y });
+    startEdgeScroll();
 
-  const onDragOver = (e: React.DragEvent) => {
-    if (!isEdit) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const drag = ui.drag;
-    if (!drag || !state.items[drag.itemId]) return;
-    const cell = cellFromEvent(e);
-    if (!cell) return;
-    const targetX = Math.max(0, Math.min(slotCount - drag.w, cell.col - drag.offsetCol));
-    const targetY = Math.max(0, cell.row - drag.offsetRow);
-    const cur = ui.preview;
-    if (!cur || cur.parentId !== 'root' || cur.x !== targetX || cur.y !== targetY) {
-      ui.setPreview({ parentId: 'root', x: targetX, y: targetY });
-    }
-  };
+    const computeTarget = (ev: MouseEvent) => {
+      const scrollDelta = window.scrollY - startScrollY;
+      const dxC = Math.round((ev.clientX - startX) / cellW);
+      const dyC = Math.round((ev.clientY - startY + scrollDelta) / cellH);
+      return {
+        x: Math.max(0, Math.min(slotCount - sp.w, startPos.x + dxC)),
+        y: Math.max(0, startPos.y + dyC)
+      };
+    };
 
-  const onDrop = (e: React.DragEvent) => {
-    if (!isEdit) return;
-    e.preventDefault();
-    const id = e.dataTransfer.getData('text/hp-id');
-    const drag = ui.drag;
-    if (!id || !drag || !state.items[id]) {
+    const move = (ev: MouseEvent) => {
+      updateEdgeScroll(ev.clientY);
+      const { x, y } = computeTarget(ev);
+      const cur = ui.preview;
+      if (!cur || cur.x !== x || cur.y !== y) {
+        ui.setPreview({ parentId: 'root', x, y });
+      }
+    };
+
+    const up = (ev: MouseEvent) => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      stopEdgeScroll();
+      const { x, y } = computeTarget(ev);
+      dispatch({
+        type: 'SET_ITEM_LAYOUT',
+        id,
+        slotCount,
+        sp: { x, y, w: sp.w, h: sp.h }
+      });
       ui.setDrag(null);
       ui.setPreview(null);
-      return;
-    }
-    const cell = cellFromEvent(e);
-    const targetX = cell
-      ? Math.max(0, Math.min(slotCount - drag.w, cell.col - drag.offsetCol))
-      : ui.preview?.x ?? 0;
-    const targetY = cell ? Math.max(0, cell.row - drag.offsetRow) : ui.preview?.y ?? 0;
-    dispatch({
-      type: 'SET_ITEM_LAYOUT',
-      id,
-      slotCount,
-      sp: { x: targetX, y: targetY, w: drag.w, h: drag.h }
-    });
-    ui.setDrag(null);
-    ui.setPreview(null);
-  };
+    };
 
-  const onDragEndItem = () => {
-    ui.setDrag(null);
-    ui.setPreview(null);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
   };
 
   // --- Corner resize ---
@@ -274,8 +250,6 @@ export function Container({ slotCount, searchQuery }: Props) {
       className="container-grid"
       ref={gridRef}
       style={containerStyle}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
     >
       {Object.entries(displayItems).map(([id, sp]) => {
         const item = vState.items[id];
@@ -296,8 +270,7 @@ export function Container({ slotCount, searchQuery }: Props) {
             onEdit={() => setEditItemId(id)}
             onStartResize={() => ui.setResizeMode(true)}
             onExitResize={() => ui.setResizeMode(false)}
-            onDragStart={e => onDragStartItem(e, id)}
-            onDragEnd={onDragEndItem}
+            onMoveStart={e => beginDrag(id, e)}
             onResizeCornerDown={(corner, ev) => beginCornerResize(id, corner, ev)}
             searchQuery={searchQuery}
             style={{

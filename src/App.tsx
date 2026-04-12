@@ -4,7 +4,6 @@ import { UIProvider, useUI } from './uiContext';
 import { BurgerMenu } from './components/BurgerMenu';
 import { Container } from './components/Container';
 import { slotsForWidth } from './layout';
-import { startEdgeScroll, stopEdgeScroll, updateEdgeScroll } from './edgeScroll';
 
 const LONG_PRESS_MS = 500;
 
@@ -42,18 +41,6 @@ function AppShell() {
     if (!state.editMode && ui.resizeMode) ui.setResizeMode(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.editMode]);
-
-  // Edge-scroll only during resize (not drag — drag + edge scroll
-  // creates a feedback loop where scrolling shifts the grid-relative
-  // cursor position, which moves the preview, which extends the
-  // buffer, which enables more scrolling, cascading instantly).
-  useEffect(() => {
-    if (!ui.activeResize) {
-      stopEdgeScroll();
-      return;
-    }
-    return () => stopEdgeScroll();
-  }, [ui.activeResize]);
 
   // Long-press on board-wrap (blank area) or container-grid (slots)
   const clearLongPress = useCallback(() => {
