@@ -93,7 +93,6 @@ export function Container({ slotCount, searchQuery }: Props) {
   const onDragOver = (e: React.DragEvent) => {
     if (!isEdit) return;
     e.preventDefault();
-    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
     const drag = ui.drag;
     if (!drag || !state.items[drag.itemId]) return;
@@ -110,7 +109,6 @@ export function Container({ slotCount, searchQuery }: Props) {
   const onDrop = (e: React.DragEvent) => {
     if (!isEdit) return;
     e.preventDefault();
-    e.stopPropagation();
     const id = e.dataTransfer.getData('text/hp-id');
     const drag = ui.drag;
     if (!id || !drag || !state.items[id]) {
@@ -238,9 +236,15 @@ export function Container({ slotCount, searchQuery }: Props) {
   }, [searchQuery, layout, slotCount]);
 
   const displayItems = searchLayout ? searchLayout.items : layout.items;
-  // Add buffer rows during drag/resize so the grid extends and gives
-  // the user somewhere to drop or stretch items into.
-  const bufferRows = (ui.drag || ui.activeResize) ? 20 : 0;
+  // Add buffer rows during drag/resize so the grid always extends
+  // beyond the current preview/resize position.
+  const previewBottom = ui.preview ? ui.preview.y + (ui.drag?.h || 3) : 0;
+  const baseTotalRows = searchLayout
+    ? Math.max(1, searchLayout.totalRows + (isEdit ? 1 : 0))
+    : totalRows;
+  const bufferRows = (ui.drag || ui.activeResize)
+    ? Math.max(20, previewBottom - baseTotalRows + 20)
+    : 0;
   const displayTotalRows = (searchLayout
     ? Math.max(1, searchLayout.totalRows + (isEdit ? 1 : 0))
     : totalRows) + bufferRows;

@@ -51,10 +51,10 @@ function AppShell() {
     }
     const onDragOver = (e: DragEvent) => updateEdgeScroll(e.clientY);
     startEdgeScroll();
-    window.addEventListener('dragover', onDragOver);
+    window.addEventListener('dragover', onDragOver, true);
     return () => {
       stopEdgeScroll();
-      window.removeEventListener('dragover', onDragOver);
+      window.removeEventListener('dragover', onDragOver, true);
     };
   }, [ui.drag]);
 
