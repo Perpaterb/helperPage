@@ -44,23 +44,6 @@ body {
   min-height: 100%;
   padding-bottom: 40px;
 }
-.page.dragging .drag-zones {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-}
-.drag-zone-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 2px;
-  pointer-events: none;
-}
-.drag-zone-line.top-fast { top: 15vh; background: red; }
-.drag-zone-line.top-slow { top: 25vh; background: orange; }
-.drag-zone-line.bot-slow { bottom: 20vh; background: orange; }
-.drag-zone-line.bot-fast { bottom: 10vh; background: red; }
 
 .top-bar {
   position: sticky;
