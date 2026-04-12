@@ -8,8 +8,8 @@
   --shadow-strong: 0 4px 16px rgba(0, 0, 0, 0.15);
   --accent: #4a90e2;
   --danger: #dc2626;
-  --slot-size: 120px;
-  --slot-gap: 10px;
+  --slot-size: 40px;
+  --slot-gap: 4px;
   --edge-line: 8px;
 }
 
@@ -645,11 +645,11 @@ body {
 
 /* "+" cells in edit mode */
 .plus-cell {
-  border: 2px dashed rgba(127, 127, 127, 0.4);
-  border-radius: 8px;
+  border: 1px dashed rgba(127, 127, 127, 0.3);
+  border-radius: 4px;
   background: transparent;
-  color: rgba(127, 127, 127, 0.6);
-  font-size: 24px;
+  color: rgba(127, 127, 127, 0.5);
+  font-size: 14px;
   cursor: pointer;
   min-height: var(--slot-size);
 }

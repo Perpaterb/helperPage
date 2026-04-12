@@ -73,7 +73,7 @@ function reducer(state: AppState, action: Action): AppState {
         type: action.itemType,
         parentId: action.parentId,
         data: defaultData(action.itemType),
-        layouts: { [action.slotCount]: { x: action.position.x, y: action.position.y, w: 1, h: 1 } }
+        layouts: { [action.slotCount]: { x: action.position.x, y: action.position.y, w: 3, h: 3 } }
       };
       return {
         ...state,

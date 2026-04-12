@@ -73,7 +73,7 @@ export function resolveLayout(
         // fallback: use last-known size if any, else 1x1
         const sizes = Object.values(it.layouts).filter(Boolean) as SizePos[];
         const last = sizes[sizes.length - 1];
-        defaultItems.push({ id: cid, w: last?.w ? Math.min(last.w, slotCount) : 1, h: last?.h || 1 });
+        defaultItems.push({ id: cid, w: last?.w ? Math.min(last.w, slotCount) : 3, h: last?.h || 3 });
       }
     } else if (ct) {
       const lay = ct.layouts[slotCount];
@@ -157,21 +157,21 @@ export function resolveLayout(
 }
 
 // Figure out slot count based on board width in px.
-// Targets (board width = ~75% of viewport on wide screens):
-//   1080p viewport -> board ~1440 -> 4 slots
-//   1440p viewport -> board ~1920 -> 6 slots
-//   ultrawide 3440 -> board ~2580 -> 8 slots
-//   4K 3840       -> board ~2880 -> 10 slots
+// 3x density: slots are 1/3 the original size for finer positioning.
+//   1080p viewport -> board ~1440 -> 12 slots
+//   1440p viewport -> board ~1920 -> 18 slots
+//   ultrawide 3440 -> board ~2580 -> 24 slots
+//   4K 3840       -> board ~2880 -> 30 slots
 export function slotsForWidth(boardWidthPx: number, depth: number): number {
   const w = boardWidthPx;
   let s: number;
-  if (w >= 2700) s = 10;
-  else if (w >= 2200) s = 8;
-  else if (w >= 1700) s = 6;
-  else if (w >= 1100) s = 4;
-  else if (w >= 780) s = 3;
-  else if (w >= 500) s = 2;
-  else s = 1;
-  s = Math.max(1, s - Math.floor(depth / 2));
-  return Math.min(10, Math.max(1, s));
+  if (w >= 2700) s = 30;
+  else if (w >= 2200) s = 24;
+  else if (w >= 1700) s = 18;
+  else if (w >= 1100) s = 12;
+  else if (w >= 780) s = 9;
+  else if (w >= 500) s = 6;
+  else s = 3;
+  s = Math.max(1, s - depth);
+  return Math.min(30, Math.max(1, s));
 }
