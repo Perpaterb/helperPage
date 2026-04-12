@@ -149,14 +149,16 @@ export function Container({ slotCount, searchQuery }: Props) {
     const cellH = slotPx + gapPx;
     const startX = startEv.clientX;
     const startY = startEv.clientY;
+    const startScrollY = window.scrollY;
     const start = { ...cur };
     ui.setActiveResize({ itemId: id, corner });
     startEdgeScroll();
 
     const move = (ev: MouseEvent) => {
       updateEdgeScroll(ev.clientY);
+      const scrollDelta = window.scrollY - startScrollY;
       const dxC = Math.round((ev.clientX - startX) / cellW);
-      const dyC = Math.round((ev.clientY - startY) / cellH);
+      const dyC = Math.round((ev.clientY - startY + scrollDelta) / cellH);
       let nx = start.x;
       let ny = start.y;
       let nw = start.w;
@@ -236,15 +238,13 @@ export function Container({ slotCount, searchQuery }: Props) {
   }, [searchQuery, layout, slotCount]);
 
   const displayItems = searchLayout ? searchLayout.items : layout.items;
-  // Add buffer rows during drag/resize so the grid always extends
-  // beyond the current preview/resize position.
-  const previewBottom = ui.preview ? ui.preview.y + (ui.drag?.h || 3) : 0;
-  const baseTotalRows = searchLayout
-    ? Math.max(1, searchLayout.totalRows + (isEdit ? 1 : 0))
-    : totalRows;
-  const bufferRows = (ui.drag || ui.activeResize)
-    ? Math.max(20, previewBottom - baseTotalRows + 20)
-    : 0;
+  // During drag: large static buffer so there's always space below.
+  // During resize: dynamic buffer extending beyond the current item edge.
+  const bufferRows = ui.drag
+    ? 100
+    : ui.activeResize
+      ? 30
+      : 0;
   const displayTotalRows = (searchLayout
     ? Math.max(1, searchLayout.totalRows + (isEdit ? 1 : 0))
     : totalRows) + bufferRows;

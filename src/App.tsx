@@ -43,20 +43,17 @@ function AppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.editMode]);
 
-  // Edge-scroll during drag: feed cursor Y from global dragover
+  // Edge-scroll only during resize (not drag — drag + edge scroll
+  // creates a feedback loop where scrolling shifts the grid-relative
+  // cursor position, which moves the preview, which extends the
+  // buffer, which enables more scrolling, cascading instantly).
   useEffect(() => {
-    if (!ui.drag) {
+    if (!ui.activeResize) {
       stopEdgeScroll();
       return;
     }
-    const onDragOver = (e: DragEvent) => updateEdgeScroll(e.clientY);
-    startEdgeScroll();
-    window.addEventListener('dragover', onDragOver, true);
-    return () => {
-      stopEdgeScroll();
-      window.removeEventListener('dragover', onDragOver, true);
-    };
-  }, [ui.drag]);
+    return () => stopEdgeScroll();
+  }, [ui.activeResize]);
 
   // Long-press on board-wrap (blank area) or container-grid (slots)
   const clearLongPress = useCallback(() => {
