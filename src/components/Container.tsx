@@ -20,6 +20,8 @@ export function Container({ slotCount, searchQuery }: Props) {
   const ui = useUI();
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [addingAt, setAddingAt] = useState<{ x: number; y: number } | null>(null);
+  const [dragRowLock, setDragRowLock] = useState<number | null>(null);
+  const dragCursorY = useRef(0);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
   // Listen for long-press-slot events dispatched by App when entering edit mode
@@ -45,7 +47,10 @@ export function Container({ slotCount, searchQuery }: Props) {
   const isEdit = state.editMode;
   const totalRows = Math.max(1, layout.totalRows + (isEdit ? 1 : 0));
 
-  // --- Mouse-based drag (mirrors resize: delta + scroll compensation) ---
+  // --- Mouse-based drag with controlled row expansion ---
+  // Bottom 15%: add one row + scroll down every 200ms.
+  // Top 15%: scroll up every 200ms. No row removal during drag.
+  // After release: unlock rows, grid recalculates to fit content.
   const beginDrag = (id: string, startEv: React.MouseEvent) => {
     const item = state.items[id];
     if (!item || !gridRef.current) return;
@@ -63,6 +68,9 @@ export function Container({ slotCount, searchQuery }: Props) {
     const startScrollY = window.scrollY;
     const startPos = { x: sp.x, y: sp.y };
 
+    // Lock current row count — can only grow, never shrink during drag
+    setDragRowLock(totalRows);
+
     ui.setDrag({
       itemId: id,
       fromParentId: 'root',
@@ -72,21 +80,38 @@ export function Container({ slotCount, searchQuery }: Props) {
       h: sp.h
     });
     ui.setPreview({ parentId: 'root', x: sp.x, y: sp.y });
-    startEdgeScroll();
+    dragCursorY.current = startEv.clientY;
 
-    const computeTarget = (ev: MouseEvent) => {
+    const computeTarget = (clientX: number, clientY: number) => {
       const scrollDelta = window.scrollY - startScrollY;
-      const dxC = Math.round((ev.clientX - startX) / cellW);
-      const dyC = Math.round((ev.clientY - startY + scrollDelta) / cellH);
+      const dxC = Math.round((clientX - startX) / cellW);
+      const dyC = Math.round((clientY - startY + scrollDelta) / cellH);
       return {
         x: Math.max(0, Math.min(slotCount - sp.w, startPos.x + dxC)),
         y: Math.max(0, startPos.y + dyC)
       };
     };
 
+    // 200ms interval: add rows at bottom / scroll at edges
+    const interval = setInterval(() => {
+      const vh = window.innerHeight;
+      const cy = dragCursorY.current;
+      if (cy > vh * 0.85) {
+        // Bottom 15%: add one row and scroll down
+        setDragRowLock(prev => (prev != null ? prev + 1 : null));
+        window.scrollBy({ top: cellH, behavior: 'instant' as ScrollBehavior });
+      } else if (cy < vh * 0.15 && window.scrollY > 0) {
+        // Top 15%: scroll up (no row removal)
+        window.scrollBy({ top: -cellH, behavior: 'instant' as ScrollBehavior });
+      }
+    }, 200);
+
+    let lastMove: MouseEvent | null = null;
+
     const move = (ev: MouseEvent) => {
-      updateEdgeScroll(ev.clientY);
-      const { x, y } = computeTarget(ev);
+      lastMove = ev;
+      dragCursorY.current = ev.clientY;
+      const { x, y } = computeTarget(ev.clientX, ev.clientY);
       const cur = ui.preview;
       if (!cur || cur.x !== x || cur.y !== y) {
         ui.setPreview({ parentId: 'root', x, y });
@@ -94,10 +119,10 @@ export function Container({ slotCount, searchQuery }: Props) {
     };
 
     const up = (ev: MouseEvent) => {
+      clearInterval(interval);
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
-      stopEdgeScroll();
-      const { x, y } = computeTarget(ev);
+      const { x, y } = computeTarget(ev.clientX, ev.clientY);
       dispatch({
         type: 'SET_ITEM_LAYOUT',
         id,
@@ -106,6 +131,8 @@ export function Container({ slotCount, searchQuery }: Props) {
       });
       ui.setDrag(null);
       ui.setPreview(null);
+      // Unlock rows — grid recalculates to fit content on next render
+      setDragRowLock(null);
     };
 
     window.addEventListener('mousemove', move);
@@ -214,16 +241,17 @@ export function Container({ slotCount, searchQuery }: Props) {
   }, [searchQuery, layout, slotCount]);
 
   const displayItems = searchLayout ? searchLayout.items : layout.items;
-  // During drag: large static buffer so there's always space below.
-  // During resize: dynamic buffer extending beyond the current item edge.
-  const bufferRows = ui.drag
-    ? 100
-    : ui.activeResize
-      ? 30
-      : 0;
-  const displayTotalRows = (searchLayout
+  // During resize: buffer so there's space to stretch into.
+  const resizeBuffer = ui.activeResize ? 30 : 0;
+  const baseTotalRows = searchLayout
     ? Math.max(1, searchLayout.totalRows + (isEdit ? 1 : 0))
-    : totalRows) + bufferRows;
+    : totalRows;
+  // During drag: rows can only grow (locked), never shrink.
+  // After drag: unlock and recalculate normally.
+  const displayTotalRows = Math.max(
+    baseTotalRows + resizeBuffer,
+    dragRowLock ?? 0
+  );
 
   const occupied = useMemo(() => {
     const rows = displayTotalRows;
