@@ -19,8 +19,9 @@
 
 ## Environment
 - This project is **Docker-only**. Never run `npm`, `node`, `vite`, or `tsc` on the host. All install / build / typecheck / run steps go through `docker compose`.
-  - Build: `docker compose build`
-  - Run: `docker compose up -d` → http://localhost:8080
+  - Start: `./start.sh` — finds first available port ≥ 8000, builds and runs
+  - Build only: `docker compose build`
+  - Run on specific port: `HP_PORT=8080 docker compose up -d`
   - Stop: `docker compose down`
 
 ## Workflow summary

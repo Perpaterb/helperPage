@@ -3,5 +3,5 @@ services:
     build: .
     container_name: helperpage
     ports:
-      - "8080:80"
+      - "${HP_PORT:-8080}:80"
     restart: unless-stopped
