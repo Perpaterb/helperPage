@@ -97,17 +97,28 @@ export function Container({ slotCount, searchQuery }: Props) {
       };
     };
 
-    // 200ms interval: only the bottom 15% and top 80px trigger scroll.
-    const TOP_EDGE_PX = Math.floor(window.innerHeight * 0.25);
-    const scrollLock = { enabled: true };
+    // 200ms interval with speed zones:
+    // Bottom 10% (fast): 3 rows per tick
+    // Bottom 10-20% (slow): 1 row per tick
+    // Top 15% (fast): 3 rows scroll per tick
+    // Top 15-25% (slow): 1 row scroll per tick
+    // Middle 55%: nothing
     const interval = setInterval(() => {
-      if (!scrollLock.enabled) return;
       const vh = window.innerHeight;
       const cy = dragCursorY.current;
-      if (cy >= Math.floor(vh * 0.85)) {
+      if (cy >= vh * 0.9) {
+        // Bottom 10%: fast — 3 rows
+        setDragRowLock(prev => (prev != null ? prev + 3 : null));
+        window.scrollBy(0, cellH * 3);
+      } else if (cy >= vh * 0.8) {
+        // Bottom 10-20%: slow — 1 row
         setDragRowLock(prev => (prev != null ? prev + 1 : null));
         window.scrollBy(0, cellH);
-      } else if (cy <= TOP_EDGE_PX && window.scrollY > 0) {
+      } else if (cy <= vh * 0.15 && window.scrollY > 0) {
+        // Top 15%: fast — 3 rows scroll
+        window.scrollBy(0, -cellH * 3);
+      } else if (cy <= vh * 0.25 && window.scrollY > 0) {
+        // Top 15-25%: slow — 1 row scroll
         window.scrollBy(0, -cellH);
       }
     }, 200);
