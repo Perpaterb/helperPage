@@ -108,7 +108,16 @@ function reducer(state: AppState, action: Action): AppState {
       const it = state.items[action.id];
       if (!it) return state;
       const newLayouts = { ...it.layouts, [action.slotCount]: action.sp };
-      return { ...state, items: { ...state.items, [action.id]: { ...it, layouts: newLayouts } } };
+      // Promote this item to the front of its parent's child order so the
+      // packer honours its position over earlier-added items on collision.
+      const parent = it.parentId;
+      const parentOrder = state.childOrder[parent] || [];
+      const promoted = [action.id, ...parentOrder.filter(c => c !== action.id)];
+      return {
+        ...state,
+        items: { ...state.items, [action.id]: { ...it, layouts: newLayouts } },
+        childOrder: { ...state.childOrder, [parent]: promoted }
+      };
     }
     case 'SET_CATEGORY_LAYOUT': {
       const cat = state.categories[action.id];
