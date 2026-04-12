@@ -2,6 +2,7 @@ import { useStore } from '../store';
 import { Modal } from './Modal';
 import { ButtonData, NotesData, TodoData } from '../types';
 import { resolveBg } from '../colors';
+import { ColorPicker } from './ColorPicker';
 
 export function EditItemModal({
   itemId,
@@ -23,19 +24,18 @@ export function EditItemModal({
   const currentBg = resolveBg(item.data as any, state.darkMode);
 
   const ColorField = () => (
-    <label>
-      Background ({state.darkMode ? 'dark mode' : 'light mode'})
-      <div className="color-row">
-        <input
-          type="color"
-          value={currentBg}
-          onChange={e => update({ [field]: e.target.value })}
-        />
-        <small className="muted">
-          Each theme has its own colour memory. Switch mode to edit the other.
-        </small>
+    <div className="field-block">
+      <div className="field-label">
+        Background ({state.darkMode ? 'dark mode' : 'light mode'})
       </div>
-    </label>
+      <ColorPicker
+        value={currentBg}
+        onChange={c => update({ [field]: c })}
+      />
+      <small className="muted">
+        Each theme has its own colour memory. Switch mode to edit the other.
+      </small>
+    </div>
   );
 
   return (
