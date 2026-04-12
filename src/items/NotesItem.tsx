@@ -42,10 +42,12 @@ interface Btn {
 
 export function NotesItem({
   data,
-  onChange
+  onChange,
+  searchQuery
 }: {
   data: NotesData;
   onChange: (d: NotesData) => void;
+  searchQuery?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -146,7 +148,17 @@ export function NotesItem({
     { label: '⛔', title: 'Danger callout', run: () => callout('danger') }
   ];
 
-  const prepared = useMemo(() => preprocessMd(data.markdown || ''), [data.markdown]);
+  const prepared = useMemo(() => {
+    let md = preprocessMd(data.markdown || '');
+    if (searchQuery) {
+      const escaped = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      md = md.replace(
+        new RegExp(`(${escaped})`, 'gi'),
+        '<mark class="search-hit">$1</mark>'
+      );
+    }
+    return md;
+  }, [data.markdown, searchQuery]);
 
   return (
     <div className="item-notes" onMouseDown={e => e.stopPropagation()}>

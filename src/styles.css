@@ -93,6 +93,53 @@ body {
   background: rgba(127, 127, 127, 0.15);
 }
 
+/* Theme toggle switch */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+}
+.theme-toggle input {
+  display: none;
+}
+.theme-icon {
+  font-size: 18px;
+  line-height: 1;
+  width: 22px;
+  text-align: center;
+}
+.toggle-track {
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--card-border);
+  position: relative;
+  transition: background 200ms ease;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 200ms ease;
+}
+.theme-toggle input:checked + .toggle-track {
+  background: var(--accent);
+}
+.theme-toggle input:checked + .toggle-track::after {
+  left: 18px;
+}
+
 .search {
   flex: 1;
   max-width: 640px;
@@ -514,6 +561,10 @@ body {
   color: #1a1a1a;
   padding: 0 3px;
   border-radius: 2px;
+}
+.notes-preview mark.search-hit {
+  background: #ff6b35;
+  color: #fff;
 }
 .notes-preview blockquote {
   margin: 6px 0;

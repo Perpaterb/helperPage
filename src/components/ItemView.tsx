@@ -17,6 +17,7 @@ interface Props {
   onDragStart: (e: React.DragEvent) => void;
   onDragEnd: () => void;
   onResizeCornerDown: (corner: Corner, ev: React.MouseEvent) => void;
+  searchQuery?: string;
   style?: React.CSSProperties;
 }
 
@@ -32,6 +33,7 @@ export function ItemView({
   onDragStart,
   onDragEnd,
   onResizeCornerDown,
+  searchQuery,
   style
 }: Props) {
   const { dispatch } = useStore();
@@ -45,6 +47,7 @@ export function ItemView({
       <TodoItem
         data={item.data as TodoData}
         onChange={d => dispatch({ type: 'UPDATE_ITEM_DATA', id: item.id, data: d })}
+        searchQuery={searchQuery}
       />
     );
   } else if (item.type === 'notes') {
@@ -52,6 +55,7 @@ export function ItemView({
       <NotesItem
         data={item.data as NotesData}
         onChange={d => dispatch({ type: 'UPDATE_ITEM_DATA', id: item.id, data: d })}
+        searchQuery={searchQuery}
       />
     );
   }

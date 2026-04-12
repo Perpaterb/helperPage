@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../store';
 import { resolveLayout, packItems, availableSize } from '../layout';
 import { buildVirtualState } from '../virtualState';
@@ -20,6 +20,16 @@ export function Container({ slotCount, searchQuery }: Props) {
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [addingAt, setAddingAt] = useState<{ x: number; y: number } | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
+
+  // Listen for long-press-slot events dispatched by App when entering edit mode
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { x, y } = (e as CustomEvent).detail;
+      setAddingAt({ x, y });
+    };
+    window.addEventListener('hp-longpress-slot', handler);
+    return () => window.removeEventListener('hp-longpress-slot', handler);
+  }, []);
 
   const vState = useMemo(
     () => buildVirtualState(state, ui.drag, ui.preview, slotCount),
@@ -271,6 +281,7 @@ export function Container({ slotCount, searchQuery }: Props) {
             onDragStart={e => onDragStartItem(e, id)}
             onDragEnd={onDragEndItem}
             onResizeCornerDown={(corner, ev) => beginCornerResize(id, corner, ev)}
+            searchQuery={searchQuery}
             style={{
               gridColumn: `${sp.x + 1} / span ${sp.w}`,
               gridRow: `${sp.y + 1} / span ${sp.h}`,
