@@ -8,6 +8,7 @@ import { EditItemModal } from './EditItemModal';
 import { EditCategoryModal } from './EditCategoryModal';
 import { AddItemModal } from './AddItemModal';
 import { SizePos } from '../types';
+import { resolveBg, textColorFor } from '../colors';
 
 interface Props {
   parentId: string;
@@ -309,6 +310,8 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
         const isDragging = ui.drag?.itemId === id;
         const activeCorner =
           ui.activeResize?.itemId === id ? ui.activeResize.corner : null;
+        const bg = resolveBg(item.data as any, state.darkMode);
+        const fg = textColorFor(bg);
         return (
           <ItemView
             key={id}
@@ -325,7 +328,9 @@ export function Container({ parentId, slotCount, depth, searchQuery }: Props) {
             onResizeCornerDown={(corner, ev) => beginCornerResize(id, corner, ev)}
             style={{
               gridColumn: `${sp.x + 1} / span ${sp.w}`,
-              gridRow: `${sp.y + 1} / span ${sp.h}`
+              gridRow: `${sp.y + 1} / span ${sp.h}`,
+              background: bg,
+              color: fg
             }}
           />
         );

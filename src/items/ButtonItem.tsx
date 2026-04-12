@@ -6,12 +6,7 @@ export function ButtonItem({ data }: { data: ButtonData }) {
     if (data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
   };
   return (
-    <button
-      className="item-button"
-      onClick={open}
-      style={{ background: data.bg || '#4a90e2' }}
-      title={data.url}
-    >
+    <button className="item-button" onClick={open} title={data.url}>
       <span className="item-button-text">{data.text || 'Link'}</span>
     </button>
   );

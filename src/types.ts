@@ -3,7 +3,9 @@ export type ItemType = 'button' | 'todo' | 'notes';
 export interface ButtonData {
   text: string;
   url: string;
-  bg: string;
+  bg?: string; // legacy single-color (pre per-mode)
+  bgLight?: string;
+  bgDark?: string;
 }
 export interface TodoEntry {
   id: string;
@@ -13,10 +15,14 @@ export interface TodoEntry {
 export interface TodoData {
   title: string;
   entries: TodoEntry[];
+  bgLight?: string;
+  bgDark?: string;
 }
 export interface NotesData {
   title: string;
   markdown: string;
+  bgLight?: string;
+  bgDark?: string;
 }
 
 export type ItemData = ButtonData | TodoData | NotesData;

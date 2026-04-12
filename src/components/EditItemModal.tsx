@@ -1,6 +1,7 @@
 import { useStore } from '../store';
 import { Modal } from './Modal';
 import { ButtonData, NotesData, TodoData } from '../types';
+import { resolveBg } from '../colors';
 
 export function EditItemModal({
   itemId,
@@ -17,6 +18,25 @@ export function EditItemModal({
 
   const update = (data: any) =>
     dispatch({ type: 'UPDATE_ITEM_DATA', id: itemId, data: { ...item.data, ...data } });
+
+  const field = state.darkMode ? 'bgDark' : 'bgLight';
+  const currentBg = resolveBg(item.data as any, state.darkMode);
+
+  const ColorField = () => (
+    <label>
+      Background ({state.darkMode ? 'dark mode' : 'light mode'})
+      <div className="color-row">
+        <input
+          type="color"
+          value={currentBg}
+          onChange={e => update({ [field]: e.target.value })}
+        />
+        <small className="muted">
+          Each theme has its own colour memory. Switch mode to edit the other.
+        </small>
+      </div>
+    </label>
+  );
 
   return (
     <Modal title={`Edit ${item.type}`} onClose={onClose}>
@@ -38,25 +58,21 @@ export function EditItemModal({
               onChange={e => update({ url: e.target.value })}
             />
           </label>
-          <label>
-            Background colour
-            <input
-              type="color"
-              value={(item.data as ButtonData).bg}
-              onChange={e => update({ bg: e.target.value })}
-            />
-          </label>
+          <ColorField />
         </>
       )}
       {item.type === 'todo' && (
-        <label>
-          Title
-          <input
-            type="text"
-            value={(item.data as TodoData).title}
-            onChange={e => update({ title: e.target.value })}
-          />
-        </label>
+        <>
+          <label>
+            Title
+            <input
+              type="text"
+              value={(item.data as TodoData).title}
+              onChange={e => update({ title: e.target.value })}
+            />
+          </label>
+          <ColorField />
+        </>
       )}
       {item.type === 'notes' && (
         <>
@@ -76,6 +92,7 @@ export function EditItemModal({
               onChange={e => update({ markdown: e.target.value })}
             />
           </label>
+          <ColorField />
         </>
       )}
       <div className="modal-footer">

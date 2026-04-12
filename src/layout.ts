@@ -156,27 +156,22 @@ export function resolveLayout(
   return { items, categories: cats, totalRows: occupied.length };
 }
 
-// Figure out slot count based on board width in px
+// Figure out slot count based on board width in px.
+// Targets (board width = ~75% of viewport on wide screens):
+//   1080p viewport -> board ~1440 -> 4 slots
+//   1440p viewport -> board ~1920 -> 6 slots
+//   ultrawide 3440 -> board ~2580 -> 8 slots
+//   4K 3840       -> board ~2880 -> 10 slots
 export function slotsForWidth(boardWidthPx: number, depth: number): number {
-  // at 1080p full-width with depth 0: 4 slots at 3/4 width
-  // each depth reduces by some px; as width shrinks we reduce slots
-  // thresholds (approximate):
-  // >=1400 -> 4 (or more)
-  // >=1000 -> 4
-  // >=800 -> 3
-  // >=560 -> 2
-  // <560 -> 1
-  // Also cap up to 10 on very wide screens.
   const w = boardWidthPx;
   let s: number;
-  if (w >= 2000) s = 10;
-  else if (w >= 1700) s = 8;
-  else if (w >= 1400) s = 6;
-  else if (w >= 900) s = 4;
-  else if (w >= 640) s = 3;
-  else if (w >= 420) s = 2;
+  if (w >= 2700) s = 10;
+  else if (w >= 2200) s = 8;
+  else if (w >= 1700) s = 6;
+  else if (w >= 1100) s = 4;
+  else if (w >= 780) s = 3;
+  else if (w >= 500) s = 2;
   else s = 1;
-  // reduce by depth so edge lines stay visible
   s = Math.max(1, s - Math.floor(depth / 2));
   return Math.min(10, Math.max(1, s));
 }

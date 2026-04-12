@@ -184,9 +184,28 @@ function isDescendant(state: AppState, ancestorId: string, candidateId: string):
 }
 
 function defaultData(t: ItemType): any {
-  if (t === 'button') return { text: 'Link', url: 'https://example.com', bg: '#4a90e2' };
-  if (t === 'todo') return { title: 'To-do', entries: [] };
-  return { title: 'Notes', markdown: '# Notes\n\nWrite here...' };
+  if (t === 'button') {
+    return {
+      text: 'Link',
+      url: 'https://example.com',
+      bgLight: '#4a90e2',
+      bgDark: '#2b5f99'
+    };
+  }
+  if (t === 'todo') {
+    return {
+      title: 'To-do',
+      entries: [],
+      bgLight: '#ffffff',
+      bgDark: '#1f2430'
+    };
+  }
+  return {
+    title: 'Notes',
+    markdown: '# Notes\n\nWrite here...',
+    bgLight: '#ffffff',
+    bgDark: '#1f2430'
+  };
 }
 
 interface Ctx {
