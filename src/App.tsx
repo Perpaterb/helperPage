@@ -81,11 +81,12 @@ function AppShell() {
             dispatch({ type: 'TOGGLE_EDIT' });
           } else {
             // Enter edit mode; Container will pick up the pending slot via a custom event
+            const slot = longPressSlot.current;
             dispatch({ type: 'TOGGLE_EDIT' });
-            if (longPressSlot.current) {
+            if (slot) {
               setTimeout(() => {
                 window.dispatchEvent(
-                  new CustomEvent('hp-longpress-slot', { detail: longPressSlot.current })
+                  new CustomEvent('hp-longpress-slot', { detail: slot })
                 );
               }, 50);
             }
