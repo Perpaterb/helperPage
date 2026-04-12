@@ -56,7 +56,7 @@ body {
   pointer-events: none;
 }
 .page.dragging::before {
-  top: 80px;
+  top: 25vh;
 }
 .page.dragging::after {
   bottom: 15vh;

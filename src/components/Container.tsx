@@ -82,10 +82,15 @@ export function Container({ slotCount, searchQuery }: Props) {
     ui.setPreview({ parentId: 'root', x: sp.x, y: sp.y });
     dragCursorY.current = startEv.clientY;
 
+    // Use floor with a +0.5 cell dead-zone so the target only changes
+    // when the cursor crosses cleanly into the next cell, not when it
+    // wobbles near a boundary.
     const computeTarget = (clientX: number, clientY: number) => {
       const scrollDelta = window.scrollY - startScrollY;
-      const dxC = Math.round((clientX - startX) / cellW);
-      const dyC = Math.round((clientY - startY + scrollDelta) / cellH);
+      const rawDx = (clientX - startX) / cellW;
+      const rawDy = (clientY - startY + scrollDelta) / cellH;
+      const dxC = rawDx >= 0 ? Math.floor(rawDx + 0.3) : Math.ceil(rawDx - 0.3);
+      const dyC = rawDy >= 0 ? Math.floor(rawDy + 0.3) : Math.ceil(rawDy - 0.3);
       return {
         x: Math.max(0, Math.min(slotCount - sp.w, startPos.x + dxC)),
         y: Math.max(0, startPos.y + dyC)
@@ -93,7 +98,7 @@ export function Container({ slotCount, searchQuery }: Props) {
     };
 
     // 200ms interval: only the bottom 15% and top 80px trigger scroll.
-    const TOP_EDGE_PX = 80;
+    const TOP_EDGE_PX = Math.floor(window.innerHeight * 0.25);
     const scrollLock = { enabled: true };
     const interval = setInterval(() => {
       if (!scrollLock.enabled) return;
