@@ -115,7 +115,7 @@ function AppShell() {
               <button
                 key={tab.id}
                 className={'tab-btn' + (isActive ? ' active' : '')}
-                style={isActive ? { background: bg, color: fg } : undefined}
+                style={{ background: bg, color: fg }}
                 onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', id: tab.id })}
                 title={tab.title}
               >
