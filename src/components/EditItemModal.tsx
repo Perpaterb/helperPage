@@ -58,6 +58,14 @@ export function EditItemModal({
               onChange={e => update({ url: e.target.value })}
             />
           </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={(item.data as ButtonData).showFavicon !== false}
+              onChange={e => update({ showFavicon: e.target.checked })}
+            />
+            Show favicon
+          </label>
           <ColorField />
         </>
       )}

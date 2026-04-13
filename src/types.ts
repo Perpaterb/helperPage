@@ -6,6 +6,7 @@ export interface ButtonData {
   bg?: string;
   bgLight?: string;
   bgDark?: string;
+  showFavicon?: boolean;
 }
 export interface TodoEntry {
   id: string;

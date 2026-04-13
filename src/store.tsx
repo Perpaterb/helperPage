@@ -99,7 +99,7 @@ function reducer(state: AppState, action: Action): AppState {
 
 function defaultData(t: ItemType): any {
   if (t === 'button') {
-    return { text: 'Link', url: 'https://example.com', bgLight: '#4a90e2', bgDark: '#2b5f99' };
+    return { text: 'Link', url: 'https://example.com', bgLight: '#4a90e2', bgDark: '#2b5f99', showFavicon: true };
   }
   if (t === 'todo') {
     return { title: 'To-do', entries: [], bgLight: '#ffffff', bgDark: '#1f2430' };
