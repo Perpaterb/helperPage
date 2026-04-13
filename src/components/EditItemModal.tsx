@@ -6,10 +6,12 @@ import { ColorPicker } from './ColorPicker';
 
 export function EditItemModal({
   itemId,
+  slotCount,
   onClose,
   onDelete
 }: {
   itemId: string;
+  slotCount: number;
   onClose: () => void;
   onDelete: () => void;
 }) {
@@ -22,6 +24,13 @@ export function EditItemModal({
 
   const field = state.darkMode ? 'bgDark' : 'bgLight';
   const currentBg = resolveBg(item.data as any, state.darkMode);
+
+  const otherTabs = state.tabs.filter(t => t.id !== item.parentId);
+
+  const handleMoveToTab = (toTabId: string) => {
+    dispatch({ type: 'MOVE_ITEM_TO_TAB', id: itemId, toTab: toTabId, slotCount });
+    onClose();
+  };
 
   const ColorField = () => (
     <div className="field-block">
@@ -108,6 +117,22 @@ export function EditItemModal({
           </label>
           <ColorField />
         </>
+      )}
+      {otherTabs.length > 0 && (
+        <div className="field-block">
+          <div className="field-label">Move to tab</div>
+          <div className="move-tab-list">
+            {otherTabs.map(t => (
+              <button
+                key={t.id}
+                className="move-tab-btn"
+                onClick={() => handleMoveToTab(t.id)}
+              >
+                {t.title}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
       <div className="modal-footer">
         <button className="danger" onClick={onDelete}>

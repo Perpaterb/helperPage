@@ -984,6 +984,24 @@ body {
 .color-swatch-btn.selected {
   box-shadow: 0 0 0 2px var(--accent);
 }
+.move-tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.move-tab-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 13px;
+}
+.move-tab-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .modal-footer {
   display: flex;
   justify-content: space-between;

@@ -354,6 +354,7 @@ export function Container({ slotCount, searchQuery }: Props) {
       {editItemId && (
         <EditItemModal
           itemId={editItemId}
+          slotCount={slotCount}
           onClose={() => setEditItemId(null)}
           onDelete={() => {
             dispatch({ type: 'DELETE_ITEM', id: editItemId });

@@ -19,7 +19,8 @@ type Action =
   | { type: 'DELETE_TAB'; id: string }
   | { type: 'UPDATE_TAB'; id: string; patch: Partial<Tab> }
   | { type: 'SET_ACTIVE_TAB'; id: string }
-  | { type: 'REORDER_TABS'; tabs: Tab[] };
+  | { type: 'REORDER_TABS'; tabs: Tab[] }
+  | { type: 'MOVE_ITEM_TO_TAB'; id: string; toTab: string; slotCount: number };
 
 function reducer(state: AppState, action: Action): AppState {
   const tab = state.activeTab;
@@ -138,6 +139,86 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, activeTab: action.id };
     case 'REORDER_TABS':
       return { ...state, tabs: action.tabs };
+    case 'MOVE_ITEM_TO_TAB': {
+      const it = state.items[action.id];
+      if (!it) return state;
+      const fromTab = it.parentId;
+      const toTab = action.toTab;
+      if (fromTab === toTab) return state;
+      const sc = action.slotCount;
+
+      // Get the item's layout at this slot count (or pick from any)
+      const sizes = Object.values(it.layouts).filter(Boolean) as SizePos[];
+      const lay = it.layouts[sc] || sizes[sizes.length - 1] || { x: 0, y: 0, w: 2, h: 2 };
+      const w = Math.max(1, Math.min(lay.w, sc));
+      const h = Math.max(1, lay.h);
+      let targetX = Math.max(0, Math.min(lay.x, sc - w));
+      let targetY = Math.max(0, lay.y);
+
+      // Build occupied grid for the target tab
+      const targetOrder = state.childOrder[toTab] || [];
+      const occupied: boolean[][] = [];
+      const ensureRow = (r: number) => {
+        while (occupied.length <= r) occupied.push(new Array(sc).fill(false));
+      };
+      const isFree = (x: number, y: number, cw: number, ch: number) => {
+        for (let rr = y; rr < y + ch; rr++) {
+          for (let cc = x; cc < x + cw; cc++) {
+            if (cc >= sc) return false;
+            ensureRow(rr);
+            if (occupied[rr][cc]) return false;
+          }
+        }
+        return true;
+      };
+      for (const cid of targetOrder) {
+        const other = state.items[cid];
+        if (!other) continue;
+        const oLay = other.layouts[sc];
+        if (!oLay) continue;
+        for (let rr = oLay.y; rr < oLay.y + oLay.h; rr++) {
+          for (let cc = oLay.x; cc < oLay.x + oLay.w; cc++) {
+            ensureRow(rr);
+            if (cc < sc) occupied[rr][cc] = true;
+          }
+        }
+      }
+
+      // Try preferred position, otherwise find first free spot
+      ensureRow(targetY + h - 1);
+      if (!isFree(targetX, targetY, w, h)) {
+        let placed = false;
+        for (let r = 0; r < 500 && !placed; r++) {
+          ensureRow(r);
+          for (let c = 0; c + w <= sc; c++) {
+            if (isFree(c, r, w, h)) {
+              targetX = c;
+              targetY = r;
+              placed = true;
+              break;
+            }
+          }
+        }
+      }
+
+      // Update item: new parent, set layout at this slot count
+      const newItem = {
+        ...it,
+        parentId: toTab,
+        layouts: { ...it.layouts, [sc]: { x: targetX, y: targetY, w, h } }
+      };
+
+      // Update childOrder: remove from source, add to target
+      const newOrder = { ...state.childOrder };
+      newOrder[fromTab] = (newOrder[fromTab] || []).filter(c => c !== action.id);
+      newOrder[toTab] = [...(newOrder[toTab] || []), action.id];
+
+      return {
+        ...state,
+        items: { ...state.items, [action.id]: newItem },
+        childOrder: newOrder
+      };
+    }
     default:
       return state;
   }
