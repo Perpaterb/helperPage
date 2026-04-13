@@ -250,8 +250,8 @@ body {
 }
 
 .search {
-  flex: 1 1 200px;
-  min-width: 0;
+  flex: 1 1 150px;
+  min-width: 120px;
   max-width: 640px;
   margin: 0 auto;
   height: 40px;
@@ -265,9 +265,6 @@ body {
 }
 .search:focus {
   border-color: var(--accent);
-}
-@media (max-width: 640px) {
-  .tab-bar { display: none; }
 }
 @media (max-width: 480px) {
   .theme-toggle { display: none; }
