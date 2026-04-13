@@ -102,39 +102,22 @@ function AppShell() {
   const onBoardPointerUp = useCallback(() => clearLongPress(), [clearLongPress]);
   const onBoardPointerLeave = useCallback(() => clearLongPress(), [clearLongPress]);
 
-  // Measure how many tabs fit in the available space
-  const topBarRef = useRef<HTMLDivElement | null>(null);
-  const tabBarRef = useRef<HTMLDivElement | null>(null);
+  // Measure how many tabs fit inside the allTabs container
+  const allTabsRef = useRef<HTMLDivElement | null>(null);
   const [visibleTabCount, setVisibleTabCount] = useState(state.tabs.length);
+  const TAB_WIDTH = 100; // approximate width per tab (padding + text)
+  const TAB_GAP = 4;
 
   useLayoutEffect(() => {
     const measure = () => {
-      if (!topBarRef.current || !tabBarRef.current) return;
-      const barRect = topBarRef.current.getBoundingClientRect();
-      // Space taken by other items: burger, search, toggle, gaps
-      const children = Array.from(topBarRef.current.children) as HTMLElement[];
-      let otherWidth = 0;
-      for (const child of children) {
-        if (child === tabBarRef.current) continue;
-        otherWidth += child.getBoundingClientRect().width;
-      }
-      const gaps = (children.length - 1) * 8; // gap: 8px
-      const available = barRect.width - otherWidth - gaps;
-      // Measure each tab button
-      const tabBtns = Array.from(tabBarRef.current.children) as HTMLElement[];
-      let used = 0;
-      let count = 0;
-      for (const btn of tabBtns) {
-        const w = btn.scrollWidth + 4; // 4px gap between tabs
-        if (used + w > available && count > 0) break;
-        used += w;
-        count++;
-      }
-      setVisibleTabCount(Math.max(0, count));
+      if (!allTabsRef.current) return;
+      const available = allTabsRef.current.clientWidth;
+      const count = Math.floor((available + TAB_GAP) / (TAB_WIDTH + TAB_GAP));
+      setVisibleTabCount(Math.max(0, Math.min(count, state.tabs.length)));
     };
     measure();
     const ro = new ResizeObserver(measure);
-    if (topBarRef.current) ro.observe(topBarRef.current);
+    if (allTabsRef.current) ro.observe(allTabsRef.current);
     return () => ro.disconnect();
   }, [state.tabs]);
 
@@ -142,9 +125,9 @@ function AppShell() {
 
   return (
     <div className={'page' + (ui.resizeMode ? ' resize-active' : '')}>
-      <div className="top-bar" ref={topBarRef}>
+      <div className="top-bar">
         <BurgerMenu />
-        <div className="tab-bar" ref={tabBarRef}>
+        <div className="all-tabs" ref={allTabsRef}>
           {visibleTabs.map(tab => {
             const isActive = tab.id === state.activeTab;
             const bg = resolveBg(tab as any, state.darkMode);

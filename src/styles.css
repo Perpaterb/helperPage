@@ -216,11 +216,13 @@ body {
   left: 18px;
 }
 
-/* Tab bar in top-bar */
-.tab-bar {
+/* Tabs container — flexes to fill available space alongside search */
+.all-tabs {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   gap: 4px;
-  flex-shrink: 0;
+  align-items: center;
 }
 .tab-btn {
   padding: 8px 18px;
@@ -247,10 +249,10 @@ body {
 }
 
 .search {
-  flex: 1 1 150px;
+  flex: 1 1 0;
   min-width: 120px;
   max-width: 640px;
-  margin: 0 auto;
+  margin-left: auto;
   height: 40px;
   padding: 0 16px;
   border-radius: 20px;
@@ -265,7 +267,6 @@ body {
 }
 @media (max-width: 480px) {
   .theme-toggle { display: none; }
-  .search { flex-basis: 100%; }
 }
 
 .new-cat-bar {
