@@ -263,8 +263,13 @@ body {
 .search:focus {
   border-color: var(--accent);
 }
+.top-bar-spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
 @media (max-width: 480px) {
   .theme-toggle { display: none; }
+  .top-bar-spacer { display: none; }
 }
 
 .new-cat-bar {

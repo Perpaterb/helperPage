@@ -152,6 +152,7 @@ function AppShell() {
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
+        <div className="top-bar-spacer" />
         <label className="theme-toggle" title={state.darkMode ? 'Switch to light' : 'Switch to dark'}>
           <span className="theme-icon">{state.darkMode ? '☾' : '☀'}</span>
           <input
