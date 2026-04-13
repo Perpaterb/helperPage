@@ -226,19 +226,20 @@ body {
   min-width: 0;
 }
 .tab-btn {
-  padding: 6px 14px;
+  padding: 8px 18px;
   border-radius: 8px;
   border: 1px solid var(--card-border);
   background: var(--card);
   color: var(--fg);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
+  max-width: 140px;
   flex-shrink: 0;
+  height: 36px;
 }
 .tab-btn.active {
   font-weight: 600;
@@ -266,14 +267,10 @@ body {
 .search:focus {
   border-color: var(--accent);
 }
-.top-spacer {
-  width: 40px;
-}
 @media (max-width: 640px) {
   .tab-bar { display: none; }
 }
 @media (max-width: 480px) {
-  .top-spacer { display: none; }
   .theme-toggle { display: none; }
   .search { flex-basis: 100%; }
 }

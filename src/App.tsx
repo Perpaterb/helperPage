@@ -124,6 +124,13 @@ function AppShell() {
             );
           })}
         </div>
+        <input
+          className="search"
+          type="text"
+          placeholder="Search items"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+        />
         <label className="theme-toggle" title={state.darkMode ? 'Switch to light' : 'Switch to dark'}>
           <span className="theme-icon">{state.darkMode ? '☾' : '☀'}</span>
           <input
@@ -133,14 +140,6 @@ function AppShell() {
           />
           <span className="toggle-track" />
         </label>
-        <input
-          className="search"
-          type="text"
-          placeholder="Search items"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
-        <div className="top-spacer" />
       </div>
       {state.editMode && ui.resizeMode && (
         <div className="new-cat-bar">
