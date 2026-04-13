@@ -38,6 +38,8 @@ export function EditItemModal({
     </div>
   );
 
+  const selectAll = (e: React.FocusEvent<HTMLInputElement>) => e.target.select();
+
   return (
     <Modal title={`Edit ${item.type}`} onClose={onClose}>
       {item.type === 'button' && (
@@ -48,6 +50,7 @@ export function EditItemModal({
               type="text"
               value={(item.data as ButtonData).text}
               onChange={e => update({ text: e.target.value })}
+              onFocus={selectAll}
             />
           </label>
           <label>
@@ -56,6 +59,7 @@ export function EditItemModal({
               type="text"
               value={(item.data as ButtonData).url}
               onChange={e => update({ url: e.target.value })}
+              onFocus={selectAll}
             />
           </label>
           <label className="checkbox-label">
@@ -77,6 +81,7 @@ export function EditItemModal({
               type="text"
               value={(item.data as TodoData).title}
               onChange={e => update({ title: e.target.value })}
+              onFocus={selectAll}
             />
           </label>
           <ColorField />
@@ -90,6 +95,7 @@ export function EditItemModal({
               type="text"
               value={(item.data as NotesData).title}
               onChange={e => update({ title: e.target.value })}
+              onFocus={selectAll}
             />
           </label>
           <label>
