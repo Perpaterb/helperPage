@@ -93,6 +93,82 @@ body {
 .burger-menu button:hover {
   background: rgba(127, 127, 127, 0.15);
 }
+.burger-divider {
+  height: 1px;
+  background: var(--card-border);
+  margin: 4px 0;
+}
+.burger-section-label {
+  padding: 6px 14px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+.burger-tabs-list {
+  display: flex;
+  flex-direction: column;
+}
+.burger-tab-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  border-left: 3px solid transparent;
+  cursor: grab;
+}
+.burger-tab-row.active {
+  border-left-color: var(--accent);
+  background: rgba(127, 127, 127, 0.08);
+}
+.burger-tab-row.drag-over {
+  border-top: 2px solid var(--accent);
+}
+.burger-tab-select {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px !important;
+  min-width: 0;
+}
+.burger-tab-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid var(--card-border);
+}
+.burger-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.burger-tab-edit {
+  width: 28px !important;
+  height: 28px;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  border-radius: 6px;
+}
+.burger-tab-grip {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: grab;
+  padding: 0 4px;
+  user-select: none;
+}
+.burger-tab-add {
+  border-top: 1px solid var(--card-border) !important;
+  font-weight: 500;
+  color: var(--accent) !important;
+}
 
 /* Theme toggle switch */
 .theme-toggle {
@@ -141,6 +217,38 @@ body {
   left: 18px;
 }
 
+/* Tab bar in top-bar */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.tab-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  flex-shrink: 0;
+}
+.tab-btn.active {
+  font-weight: 600;
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.tab-btn:hover {
+  opacity: 0.85;
+}
+
 .search {
   flex: 1 1 200px;
   min-width: 0;
@@ -161,8 +269,12 @@ body {
 .top-spacer {
   width: 40px;
 }
+@media (max-width: 640px) {
+  .tab-bar { display: none; }
+}
 @media (max-width: 480px) {
   .top-spacer { display: none; }
+  .theme-toggle { display: none; }
   .search { flex-basis: 100%; }
 }
 

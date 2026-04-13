@@ -38,22 +38,35 @@ export interface SizePos {
 export interface Item {
   id: string;
   type: ItemType;
-  parentId: string; // always "root"
+  parentId: string; // tab id
   data: ItemData;
   layouts: Record<number, SizePos | null>;
+}
+
+export interface Tab {
+  id: string;
+  title: string;
+  bgLight?: string;
+  bgDark?: string;
 }
 
 export interface AppState {
   items: Record<string, Item>;
   childOrder: Record<string, string[]>;
+  tabs: Tab[];
+  activeTab: string;
   darkMode: boolean;
   editMode: boolean;
   version: 1;
 }
 
+export const DEFAULT_TAB_ID = 'tab_default';
+
 export const emptyState = (): AppState => ({
   items: {},
-  childOrder: { root: [] },
+  childOrder: { [DEFAULT_TAB_ID]: [] },
+  tabs: [{ id: DEFAULT_TAB_ID, title: 'Home' }],
+  activeTab: DEFAULT_TAB_ID,
   darkMode: false,
   editMode: false,
   version: 1

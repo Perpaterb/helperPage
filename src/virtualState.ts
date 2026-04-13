@@ -17,10 +17,11 @@ export function buildVirtualState(
       [slotCount]: { x: preview.x, y: preview.y, w: drag.w, h: drag.h }
     }
   };
-  const toList = (state.childOrder.root || []).filter(c => c !== drag.itemId);
+  const tab = state.activeTab;
+  const toList = (state.childOrder[tab] || []).filter(c => c !== drag.itemId);
   return {
     ...state,
     items: { ...state.items, [drag.itemId]: newItem },
-    childOrder: { ...state.childOrder, root: [drag.itemId, ...toList] }
+    childOrder: { ...state.childOrder, [tab]: [drag.itemId, ...toList] }
   };
 }

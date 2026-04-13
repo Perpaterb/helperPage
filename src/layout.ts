@@ -9,7 +9,7 @@ export function resolveLayout(
   state: AppState,
   slotCount: number
 ): ResolvedLayout {
-  const order = state.childOrder.root || [];
+  const order = state.childOrder[state.activeTab] || [];
   const occupied: boolean[][] = [];
 
   const ensureRow = (r: number) => {

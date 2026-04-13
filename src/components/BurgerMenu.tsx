@@ -1,11 +1,16 @@
 import { useRef, useState } from 'react';
-import { useStore } from '../store';
-import { AppState, emptyState } from '../types';
+import { useStore, migrateState } from '../store';
+import { Tab } from '../types';
+import { EditTabModal } from './EditTabModal';
+import { resolveBg, textColorFor } from '../colors';
 
 export function BurgerMenu() {
   const { state, dispatch } = useStore();
   const [open, setOpen] = useState(false);
+  const [editTab, setEditTab] = useState<Tab | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const dragIdx = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const doExport = () => {
     const { editMode, ...rest } = state;
@@ -29,13 +34,42 @@ export function BurgerMenu() {
     try {
       const text = await f.text();
       const parsed = JSON.parse(text);
-      const merged: AppState = { ...emptyState(), ...parsed, editMode: false };
+      const merged = migrateState(parsed);
       dispatch({ type: 'IMPORT', state: merged });
     } catch (err) {
       alert('Invalid JSON file');
     }
     e.target.value = '';
     setOpen(false);
+  };
+
+  const handleDragStart = (idx: number) => {
+    dragIdx.current = idx;
+  };
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  };
+
+  const handleDrop = (idx: number) => {
+    const from = dragIdx.current;
+    if (from == null || from === idx) {
+      dragIdx.current = null;
+      setDragOverIdx(null);
+      return;
+    }
+    const newTabs = [...state.tabs];
+    const [moved] = newTabs.splice(from, 1);
+    newTabs.splice(idx, 0, moved);
+    dispatch({ type: 'REORDER_TABS', tabs: newTabs });
+    dragIdx.current = null;
+    setDragOverIdx(null);
+  };
+
+  const handleDragEnd = () => {
+    dragIdx.current = null;
+    setDragOverIdx(null);
   };
 
   return (
@@ -63,6 +97,64 @@ export function BurgerMenu() {
           >
             {state.darkMode ? '☀ Light mode' : '☾ Dark mode'}
           </button>
+
+          <div className="burger-divider" />
+          <div className="burger-section-label">Tabs</div>
+
+          <div className="burger-tabs-list">
+            {state.tabs.map((tab, idx) => {
+              const bg = resolveBg(tab as any, state.darkMode);
+              const fg = textColorFor(bg);
+              const isActive = tab.id === state.activeTab;
+              return (
+                <div
+                  key={tab.id}
+                  className={
+                    'burger-tab-row' +
+                    (isActive ? ' active' : '') +
+                    (dragOverIdx === idx ? ' drag-over' : '')
+                  }
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragOver={e => handleDragOver(e, idx)}
+                  onDrop={() => handleDrop(idx)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <button
+                    className="burger-tab-select"
+                    onClick={() => {
+                      dispatch({ type: 'SET_ACTIVE_TAB', id: tab.id });
+                      setOpen(false);
+                    }}
+                  >
+                    <span
+                      className="burger-tab-dot"
+                      style={{ background: bg, color: fg }}
+                    />
+                    <span className="burger-tab-title">{tab.title}</span>
+                  </button>
+                  <button
+                    className="burger-tab-edit"
+                    onClick={() => setEditTab(tab)}
+                    title="Edit tab"
+                  >
+                    ✎
+                  </button>
+                  <span className="burger-tab-grip" title="Drag to reorder">⠿</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            className="burger-tab-add"
+            onClick={() => {
+              dispatch({ type: 'ADD_TAB' });
+              setOpen(false);
+            }}
+          >
+            + New tab
+          </button>
         </div>
       )}
       <input
@@ -72,6 +164,12 @@ export function BurgerMenu() {
         style={{ display: 'none' }}
         onChange={onFile}
       />
+      {editTab && (
+        <EditTabModal
+          tab={state.tabs.find(t => t.id === editTab.id) || editTab}
+          onClose={() => setEditTab(null)}
+        />
+      )}
     </>
   );
 }

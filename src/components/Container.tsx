@@ -79,7 +79,7 @@ export function Container({ slotCount, searchQuery }: Props) {
       w: sp.w,
       h: sp.h
     });
-    ui.setPreview({ parentId: 'root', x: sp.x, y: sp.y });
+    ui.setPreview({ parentId: state.activeTab, x: sp.x, y: sp.y });
     dragCursorY.current = startEv.clientY;
 
     // Use floor with a +0.5 cell dead-zone so the target only changes
@@ -128,7 +128,7 @@ export function Container({ slotCount, searchQuery }: Props) {
       const { x, y } = computeTarget(ev.clientX, ev.clientY);
       const cur = ui.preview;
       if (!cur || cur.x !== x || cur.y !== y) {
-        ui.setPreview({ parentId: 'root', x, y });
+        ui.setPreview({ parentId: state.activeTab, x, y });
       }
     };
 
@@ -244,7 +244,7 @@ export function Container({ slotCount, searchQuery }: Props) {
 
   const searchLayout = useMemo(() => {
     if (!searchQuery) return null;
-    const order = state.childOrder.root || [];
+    const order = state.childOrder[state.activeTab] || [];
     const matching: { id: string; w: number; h: number }[] = [];
     for (const id of order) {
       const sp = layout.items[id];

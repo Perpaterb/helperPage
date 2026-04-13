@@ -4,6 +4,7 @@ import { UIProvider, useUI } from './uiContext';
 import { BurgerMenu } from './components/BurgerMenu';
 import { Container } from './components/Container';
 import { slotsForWidth } from './layout';
+import { resolveBg, textColorFor } from './colors';
 
 const LONG_PRESS_MS = 500;
 
@@ -105,6 +106,24 @@ function AppShell() {
     <div className={'page' + (ui.resizeMode ? ' resize-active' : '')}>
       <div className="top-bar">
         <BurgerMenu />
+        <div className="tab-bar">
+          {state.tabs.map(tab => {
+            const isActive = tab.id === state.activeTab;
+            const bg = resolveBg(tab as any, state.darkMode);
+            const fg = textColorFor(bg);
+            return (
+              <button
+                key={tab.id}
+                className={'tab-btn' + (isActive ? ' active' : '')}
+                style={isActive ? { background: bg, color: fg } : undefined}
+                onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', id: tab.id })}
+                title={tab.title}
+              >
+                {tab.title}
+              </button>
+            );
+          })}
+        </div>
         <label className="theme-toggle" title={state.darkMode ? 'Switch to light' : 'Switch to dark'}>
           <span className="theme-icon">{state.darkMode ? '☾' : '☀'}</span>
           <input
