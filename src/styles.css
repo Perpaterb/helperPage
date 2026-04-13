@@ -220,9 +220,7 @@ body {
 .tab-bar {
   display: flex;
   gap: 4px;
-  overflow: hidden;
-  flex-shrink: 1;
-  min-width: 0;
+  flex-shrink: 0;
 }
 .tab-btn {
   padding: 8px 18px;

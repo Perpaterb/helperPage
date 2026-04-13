@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { StoreProvider, useStore } from './store';
 import { UIProvider, useUI } from './uiContext';
 import { BurgerMenu } from './components/BurgerMenu';
@@ -102,12 +102,50 @@ function AppShell() {
   const onBoardPointerUp = useCallback(() => clearLongPress(), [clearLongPress]);
   const onBoardPointerLeave = useCallback(() => clearLongPress(), [clearLongPress]);
 
+  // Measure how many tabs fit in the available space
+  const topBarRef = useRef<HTMLDivElement | null>(null);
+  const tabBarRef = useRef<HTMLDivElement | null>(null);
+  const [visibleTabCount, setVisibleTabCount] = useState(state.tabs.length);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (!topBarRef.current || !tabBarRef.current) return;
+      const barRect = topBarRef.current.getBoundingClientRect();
+      // Space taken by other items: burger, search, toggle, gaps
+      const children = Array.from(topBarRef.current.children) as HTMLElement[];
+      let otherWidth = 0;
+      for (const child of children) {
+        if (child === tabBarRef.current) continue;
+        otherWidth += child.getBoundingClientRect().width;
+      }
+      const gaps = (children.length - 1) * 8; // gap: 8px
+      const available = barRect.width - otherWidth - gaps;
+      // Measure each tab button
+      const tabBtns = Array.from(tabBarRef.current.children) as HTMLElement[];
+      let used = 0;
+      let count = 0;
+      for (const btn of tabBtns) {
+        const w = btn.scrollWidth + 4; // 4px gap between tabs
+        if (used + w > available && count > 0) break;
+        used += w;
+        count++;
+      }
+      setVisibleTabCount(Math.max(0, count));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (topBarRef.current) ro.observe(topBarRef.current);
+    return () => ro.disconnect();
+  }, [state.tabs]);
+
+  const visibleTabs = state.tabs.slice(0, visibleTabCount);
+
   return (
     <div className={'page' + (ui.resizeMode ? ' resize-active' : '')}>
-      <div className="top-bar">
+      <div className="top-bar" ref={topBarRef}>
         <BurgerMenu />
-        <div className="tab-bar">
-          {state.tabs.map(tab => {
+        <div className="tab-bar" ref={tabBarRef}>
+          {visibleTabs.map(tab => {
             const isActive = tab.id === state.activeTab;
             const bg = resolveBg(tab as any, state.darkMode);
             const fg = textColorFor(bg);
