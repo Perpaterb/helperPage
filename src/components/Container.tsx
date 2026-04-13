@@ -360,7 +360,10 @@ export function Container({ slotCount, searchQuery }: Props) {
       {addingAt && (
         <AddItemModal
           onPick={type => {
-            const size = availableSize(addingAt.x, addingAt.y, slotCount, occupied);
+            const avail = availableSize(addingAt.x, addingAt.y, slotCount, occupied);
+            const size = type === 'button'
+              ? { w: Math.min(2, avail.w), h: Math.min(2, avail.h) }
+              : avail;
             dispatch({
               type: 'ADD_ITEM',
               itemType: type,
