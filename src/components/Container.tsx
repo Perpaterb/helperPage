@@ -244,9 +244,11 @@ export function Container({ slotCount, searchQuery }: Props) {
 
   const searchLayout = useMemo(() => {
     if (!searchQuery) return null;
+    const order = state.childOrder.root || [];
     const matching: { id: string; w: number; h: number }[] = [];
-    for (const [id, sp] of Object.entries(layout.items)) {
-      if (itemMatchesSearch(id)) {
+    for (const id of order) {
+      const sp = layout.items[id];
+      if (sp && itemMatchesSearch(id)) {
         matching.push({ id, w: sp.w, h: sp.h });
       }
     }
