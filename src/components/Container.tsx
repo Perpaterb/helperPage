@@ -46,19 +46,6 @@ export function Container({ slotCount, searchQuery }: Props) {
     [vState, slotCount, priorityId]
   );
 
-  // Save computed layouts for items that don't have one at this slot count
-  // so their size/position persists across width changes.
-  useEffect(() => {
-    if (ui.drag) return; // don't save during drag
-    for (const [id, sp] of Object.entries(layout.items)) {
-      const it = state.items[id];
-      if (!it) continue;
-      if (!it.layouts[slotCount]) {
-        dispatch({ type: 'SET_ITEM_LAYOUT', id, slotCount, sp });
-      }
-    }
-  }, [layout, slotCount]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const isEdit = state.editMode;
   const totalRows = Math.max(1, layout.totalRows + (isEdit ? 1 : 0));
 

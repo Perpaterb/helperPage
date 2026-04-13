@@ -171,15 +171,13 @@ export function availableSize(
 }
 
 export function slotsForWidth(boardWidthPx: number, depth: number): number {
-  const w = boardWidthPx;
-  let s: number;
-  if (w >= 2700) s = 30;
-  else if (w >= 2200) s = 24;
-  else if (w >= 1700) s = 18;
-  else if (w >= 1100) s = 12;
-  else if (w >= 780) s = 9;
-  else if (w >= 500) s = 6;
-  else s = 3;
+  // 6 slots at ~500px defines the slot width (~83px per slot).
+  // Every additional ~250px adds 3 more slots, up to 30.
+  const SLOT_PX = 500 / 6; // ~83px per slot
+  const raw = Math.floor(boardWidthPx / SLOT_PX);
+  // Round down to nearest multiple of 3, clamp to 6–30
+  let s = Math.floor(raw / 3) * 3;
+  s = Math.max(6, Math.min(30, s));
   s = Math.max(1, s - depth);
-  return Math.min(30, Math.max(1, s));
+  return Math.min(30, Math.max(3, s));
 }
