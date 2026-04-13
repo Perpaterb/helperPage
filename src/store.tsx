@@ -73,12 +73,9 @@ function reducer(state: AppState, action: Action): AppState {
       const it = state.items[action.id];
       if (!it) return state;
       const newLayouts = { ...it.layouts, [action.slotCount]: action.sp };
-      const parentOrder = state.childOrder.root || [];
-      const promoted = [action.id, ...parentOrder.filter(c => c !== action.id)];
       return {
         ...state,
-        items: { ...state.items, [action.id]: { ...it, layouts: newLayouts } },
-        childOrder: { ...state.childOrder, root: promoted }
+        items: { ...state.items, [action.id]: { ...it, layouts: newLayouts } }
       };
     }
     case 'MOVE_CHILD': {
