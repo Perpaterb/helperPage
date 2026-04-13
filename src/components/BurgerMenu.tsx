@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { nanoid } from 'nanoid';
 import { useStore, migrateState } from '../store';
 import { Tab } from '../types';
 import { EditTabModal } from './EditTabModal';
@@ -149,8 +150,10 @@ export function BurgerMenu() {
           <button
             className="burger-tab-add"
             onClick={() => {
-              dispatch({ type: 'ADD_TAB' });
+              const newId = 'tab_' + nanoid(8);
+              dispatch({ type: 'ADD_TAB', id: newId });
               setOpen(false);
+              setEditTab({ id: newId, title: `Tab ${state.tabs.length + 1}` });
             }}
           >
             + New tab

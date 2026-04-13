@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { nanoid } from 'nanoid';
 import { useStore } from '../store';
 import { resolveLayout, packItems, availableSize } from '../layout';
 import { buildVirtualState } from '../virtualState';
@@ -366,14 +367,17 @@ export function Container({ slotCount, searchQuery }: Props) {
             const size = type === 'button'
               ? { w: Math.min(2, avail.w), h: Math.min(2, avail.h) }
               : avail;
+            const newId = 'i_' + nanoid(8);
             dispatch({
               type: 'ADD_ITEM',
+              id: newId,
               itemType: type,
               slotCount,
               position: addingAt,
               size
             });
             setAddingAt(null);
+            setEditItemId(newId);
           }}
           onClose={() => setAddingAt(null)}
         />

@@ -55,6 +55,7 @@ function AppShell() {
 
   const onBoardPointerDown = useCallback(
     (e: React.PointerEvent) => {
+      if (ui.modalOpen) return;
       clearLongPress();
       const target = e.target as HTMLElement;
       // Ignore if clicking inside an item or a button/input
@@ -96,7 +97,7 @@ function AppShell() {
         clearLongPress();
       }, LONG_PRESS_MS);
     },
-    [clearLongPress, dispatch, state.editMode, slotCount]
+    [clearLongPress, dispatch, state.editMode, slotCount, ui.modalOpen]
   );
 
   const onBoardPointerUp = useCallback(() => clearLongPress(), [clearLongPress]);

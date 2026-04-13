@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useUI } from '../uiContext';
 
 export function Modal({
   title,
@@ -9,6 +10,14 @@ export function Modal({
   children: React.ReactNode;
   onClose: () => void;
 }) {
+  const ui = useUI();
+
+  useEffect(() => {
+    ui.setModalOpen(true);
+    return () => ui.setModalOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();

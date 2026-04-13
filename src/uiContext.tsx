@@ -26,6 +26,8 @@ interface UIContextValue {
   setPreview: (p: DragPreview | null) => void;
   activeResize: { itemId: string; corner: Corner } | null;
   setActiveResize: (a: { itemId: string; corner: Corner } | null) => void;
+  modalOpen: boolean;
+  setModalOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<UIContextValue | null>(null);
@@ -35,6 +37,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [drag, setDrag] = useState<DragInfo | null>(null);
   const [preview, setPreview] = useState<DragPreview | null>(null);
   const [activeResize, setActiveResize] = useState<{ itemId: string; corner: Corner } | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   return (
     <Ctx.Provider
       value={{
@@ -45,7 +48,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
         preview,
         setPreview,
         activeResize,
-        setActiveResize
+        setActiveResize,
+        modalOpen,
+        setModalOpen
       }}
     >
       {children}

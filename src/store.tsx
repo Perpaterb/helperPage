@@ -8,14 +8,14 @@ type Action =
   | { type: 'LOAD'; state: AppState }
   | { type: 'TOGGLE_EDIT' }
   | { type: 'TOGGLE_DARK' }
-  | { type: 'ADD_ITEM'; itemType: ItemType; slotCount: number; position: { x: number; y: number }; size: { w: number; h: number } }
+  | { type: 'ADD_ITEM'; id: string; itemType: ItemType; slotCount: number; position: { x: number; y: number }; size: { w: number; h: number } }
   | { type: 'UPDATE_ITEM'; id: string; patch: Partial<Item> }
   | { type: 'UPDATE_ITEM_DATA'; id: string; data: any }
   | { type: 'DELETE_ITEM'; id: string }
   | { type: 'SET_ITEM_LAYOUT'; id: string; slotCount: number; sp: SizePos }
   | { type: 'MOVE_CHILD'; id: string; toIndex: number }
   | { type: 'IMPORT'; state: AppState }
-  | { type: 'ADD_TAB' }
+  | { type: 'ADD_TAB'; id: string }
   | { type: 'DELETE_TAB'; id: string }
   | { type: 'UPDATE_TAB'; id: string; patch: Partial<Tab> }
   | { type: 'SET_ACTIVE_TAB'; id: string }
@@ -32,7 +32,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'TOGGLE_DARK':
       return { ...state, darkMode: !state.darkMode };
     case 'ADD_ITEM': {
-      const id = 'i_' + nanoid(8);
+      const id = action.id;
       const item: Item = {
         id,
         type: action.itemType,
@@ -98,7 +98,7 @@ function reducer(state: AppState, action: Action): AppState {
     }
     // --- Tab actions ---
     case 'ADD_TAB': {
-      const id = 'tab_' + nanoid(8);
+      const id = action.id;
       const newTab: Tab = { id, title: `Tab ${state.tabs.length + 1}` };
       return {
         ...state,
