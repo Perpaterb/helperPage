@@ -170,10 +170,10 @@ export function availableSize(
   return { w: Math.max(1, maxW), h: Math.max(1, maxH) };
 }
 
+// Fixed slot width — 6 slots at ~500px = ~83px per slot.
+export const SLOT_PX = 500 / 6;
+
 export function slotsForWidth(boardWidthPx: number, depth: number): number {
-  // 6 slots at ~500px defines the slot width (~83px per slot).
-  // Every additional ~250px adds 3 more slots, up to 30.
-  const SLOT_PX = 500 / 6; // ~83px per slot
   const raw = Math.floor(boardWidthPx / SLOT_PX);
   // Round down to nearest multiple of 3, clamp to 6–30
   let s = Math.floor(raw / 3) * 3;

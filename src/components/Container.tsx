@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { useStore } from '../store';
-import { resolveLayout, packItems, availableSize } from '../layout';
+import { resolveLayout, packItems, availableSize, SLOT_PX } from '../layout';
 import { buildVirtualState } from '../virtualState';
 import { useUI, Corner } from '../uiContext';
 import { ItemView } from './ItemView';
@@ -59,7 +59,7 @@ export function Container({ slotCount, searchQuery }: Props) {
     startEv.preventDefault();
     const sp: SizePos = layout.items[id] || { x: 0, y: 0, w: 3, h: 3 };
     const rect = gridRef.current.getBoundingClientRect();
-    const cellW = rect.width / slotCount;
+    const cellW = SLOT_PX;
     const slotPx =
       parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
     const gapPx =
@@ -162,7 +162,7 @@ export function Container({ slotCount, searchQuery }: Props) {
     const cur: SizePos =
       layout.items[id] || item.layouts[slotCount] || { x: 0, y: 0, w: 1, h: 1 };
     const rect = gridRef.current.getBoundingClientRect();
-    const cellW = rect.width / slotCount;
+    const cellW = SLOT_PX;
     const slotPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
     const gapPx = parseFloat(getComputedStyle(gridRef.current).rowGap || getComputedStyle(gridRef.current).gap || '4');
     const cellH = slotPx + gapPx;
@@ -287,7 +287,7 @@ export function Container({ slotCount, searchQuery }: Props) {
   }, [displayItems, displayTotalRows, slotCount]);
 
   const containerStyle: React.CSSProperties = {
-    gridTemplateColumns: `repeat(${slotCount}, 1fr)`,
+    gridTemplateColumns: `repeat(${slotCount}, ${SLOT_PX}px)`,
     gridTemplateRows: `repeat(${displayTotalRows}, var(--slot-size))`
   };
 

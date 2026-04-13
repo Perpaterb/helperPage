@@ -333,6 +333,7 @@ body {
   gap: var(--slot-gap);
   position: relative;
   min-height: var(--slot-size);
+  justify-content: center;
 }
 
 .item {
