@@ -16,6 +16,9 @@ find_port() {
   exit 1
 }
 
+# Stop the existing service first so its port is freed before scanning
+docker compose down 2>/dev/null || true
+
 PORT=$(find_port)
 export HP_PORT="$PORT"
 
