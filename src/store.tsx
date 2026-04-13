@@ -82,7 +82,8 @@ function reducer(state: AppState, action: Action): AppState {
       const newLayouts = { ...it.layouts, [action.slotCount]: action.sp };
       return {
         ...state,
-        items: { ...state.items, [action.id]: { ...it, layouts: newLayouts } }
+        items: { ...state.items, [action.id]: { ...it, layouts: newLayouts } },
+        lastMovedItem: action.id
       };
     }
     case 'MOVE_CHILD': {
@@ -200,7 +201,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const { editMode, ...persist } = state;
+      const { editMode, lastMovedItem, ...persist } = state;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(persist));
     } catch {}
   }, [state]);

@@ -7,7 +7,8 @@ export interface ResolvedLayout {
 
 export function resolveLayout(
   state: AppState,
-  slotCount: number
+  slotCount: number,
+  priorityId?: string
 ): ResolvedLayout {
   const order = state.childOrder[state.activeTab] || [];
   const occupied: boolean[][] = [];
@@ -47,12 +48,11 @@ export function resolveLayout(
 
   const items: Record<string, SizePos> = {};
 
-  // Place items with explicit layouts first (in childOrder)
-  for (const cid of order) {
+  const placeExplicit = (cid: string) => {
     const it = state.items[cid];
-    if (!it) continue;
+    if (!it) return;
     const lay = it.layouts[slotCount];
-    if (!lay) continue;
+    if (!lay) return;
     const w = Math.max(1, Math.min(lay.w, slotCount));
     const h = Math.max(1, lay.h);
     let x = Math.max(0, Math.min(lay.x, slotCount - w));
@@ -63,6 +63,17 @@ export function resolveLayout(
     }
     mark(x, y, w, h);
     items[cid] = { x, y, w, h };
+  };
+
+  // Place priority item first so it wins its position
+  if (priorityId && order.includes(priorityId)) {
+    placeExplicit(priorityId);
+  }
+
+  // Place remaining items with explicit layouts (in childOrder)
+  for (const cid of order) {
+    if (items[cid]) continue;
+    placeExplicit(cid);
   }
 
   // Pack remaining items (no explicit layout at this slot count)

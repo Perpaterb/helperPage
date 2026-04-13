@@ -57,6 +57,7 @@ export interface AppState {
   activeTab: string;
   darkMode: boolean;
   editMode: boolean;
+  lastMovedItem?: string;
   version: 1;
 }
 

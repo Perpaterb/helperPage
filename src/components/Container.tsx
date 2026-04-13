@@ -40,9 +40,10 @@ export function Container({ slotCount, searchQuery }: Props) {
     [state, ui.drag, ui.preview, slotCount]
   );
 
+  const priorityId = ui.drag?.itemId || state.lastMovedItem;
   const layout = useMemo(
-    () => resolveLayout(vState, slotCount),
-    [vState, slotCount]
+    () => resolveLayout(vState, slotCount, priorityId),
+    [vState, slotCount, priorityId]
   );
 
   const isEdit = state.editMode;
