@@ -165,7 +165,7 @@ export function NotesItem({
       <div className="item-notes-header">
         <span className="item-notes-title">{data.title || 'Notes'}</span>
         <button className="notes-mode-btn" onClick={() => setEditing(!editing)}>
-          {editing ? 'Preview' : 'Edit'}
+          {editing ? 'Preview' : 'Code'}
         </button>
       </div>
       {editing && (

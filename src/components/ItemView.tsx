@@ -4,6 +4,7 @@ import { NotesItem } from '../items/NotesItem';
 import { FolderItem } from '../items/FolderItem';
 import { SketchItem } from '../items/SketchItem';
 import { Item, ButtonData, TodoData, NotesData, FolderData, SketchData } from '../types';
+// NotesData imported above for exportNotesMd
 import { useStore } from '../store';
 import { Corner } from '../uiContext';
 
@@ -43,6 +44,20 @@ export function ItemView({
   const { dispatch } = useStore();
   const blocked = editMode || resizeMode;
   const isFolder = item.type === 'folder';
+  const isNotes = item.type === 'notes';
+
+  const exportNotesMd = () => {
+    const d = item.data as NotesData;
+    const title = d.title || 'notes';
+    const safe = title.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'notes';
+    const blob = new Blob([d.markdown || ''], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safe + '.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   let inner: React.ReactNode = null;
   if (item.type === 'button') {
@@ -53,6 +68,7 @@ export function ItemView({
         data={item.data as TodoData}
         onChange={d => dispatch({ type: 'UPDATE_ITEM_DATA', id: item.id, data: d })}
         searchQuery={searchQuery}
+        editMode={editMode}
       />
     );
   } else if (item.type === 'notes') {
@@ -108,8 +124,25 @@ export function ItemView({
     >
       <div className={'item-content' + (blocked ? ' blocked' : '')}>{inner}</div>
 
+      {/* Always-visible item-type actions (e.g. notes MD export) */}
+      {isNotes && !resizeMode && (
+        <div className="item-actions always-actions">
+          <button
+            className="icon-btn"
+            title="Export as Markdown"
+            onMouseDown={e => e.stopPropagation()}
+            onClick={e => {
+              e.stopPropagation();
+              exportNotesMd();
+            }}
+          >
+            ⇩
+          </button>
+        </div>
+      )}
+
       {editMode && !resizeMode && (
-        <div className="item-actions">
+        <div className={'item-actions' + (isNotes ? ' edit-actions-offset' : '')}>
           <button
             className="icon-btn"
             title="Edit"
