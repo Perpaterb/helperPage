@@ -802,11 +802,27 @@ body {
   overflow: auto;
   padding: 0 4px;
 }
-.notes-editor-preview {
-  flex: 0 0 auto;
-  max-height: 40%;
+.item-notes-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.crepe-editor {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: transparent;
+}
+.crepe-editor .milkdown {
+  background: transparent !important;
+  color: inherit !important;
+  min-height: 100%;
+}
+.crepe-editor .ProseMirror {
+  padding: 6px 10px !important;
   min-height: 60px;
-  border-radius: 6px;
+  outline: none;
 }
 .notes-preview h1,
 .notes-preview h2,
