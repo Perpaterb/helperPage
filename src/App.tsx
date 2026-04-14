@@ -3,7 +3,7 @@ import { StoreProvider, useStore } from './store';
 import { UIProvider, useUI } from './uiContext';
 import { BurgerMenu } from './components/BurgerMenu';
 import { Container } from './components/Container';
-import { slotsForWidth } from './layout';
+import { slotsForWidth, effectiveSlotPx, isMobileDevice } from './layout';
 import { resolveBg, textColorFor } from './colors';
 
 const LONG_PRESS_MS = 500;
@@ -14,6 +14,8 @@ function AppShell() {
   const [query, setQuery] = useState('');
   const boardRef = useRef<HTMLDivElement | null>(null);
   const [slotCount, setSlotCount] = useState(4);
+  const [slotPx] = useState(() => effectiveSlotPx());
+  const mobile = isMobileDevice();
   const longPressTimer = useRef<number | null>(null);
   const longPressTarget = useRef<'slot' | 'blank' | null>(null);
   const longPressSlot = useRef<{ x: number; y: number } | null>(null);
@@ -22,7 +24,7 @@ function AppShell() {
     const measure = () => {
       if (!boardRef.current) return;
       const w = boardRef.current.clientWidth;
-      setSlotCount(slotsForWidth(w, 0));
+      setSlotCount(slotsForWidth(w, 0, slotPx));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -37,6 +39,12 @@ function AppShell() {
   useEffect(() => {
     document.documentElement.dataset.theme = state.darkMode ? 'dark' : 'light';
   }, [state.darkMode]);
+
+  useEffect(() => {
+    // Propagate the mobile slot size to root CSS var so existing consumers
+    // (long-press math, drag gap calcs) see the scaled value.
+    document.documentElement.style.setProperty('--slot-size', `${mobile ? 28 : 40}px`);
+  }, [mobile]);
 
   useEffect(() => {
     if (!state.editMode && ui.resizeMode) ui.setResizeMode(false);
@@ -182,7 +190,7 @@ function AppShell() {
           ref={boardRef}
           style={{ ['--slot-count' as any]: slotCount }}
         >
-          <Container slotCount={slotCount} searchQuery={query} />
+          <Container slotCount={slotCount} searchQuery={query} slotPx={slotPx} />
         </div>
       </div>
     </div>

@@ -4,19 +4,19 @@ export function FolderItem({
   data,
   bg,
   fg,
-  onHeaderMouseDown
+  onHeaderPointerDown
 }: {
   data: FolderData;
   bg: string;
   fg: string;
-  onHeaderMouseDown?: (e: React.MouseEvent) => void;
+  onHeaderPointerDown?: (e: React.PointerEvent) => void;
 }) {
   return (
     <div className="item-folder" style={{ color: fg }}>
       <div
         className="item-folder-header"
         style={{ background: bg, color: fg }}
-        onMouseDown={onHeaderMouseDown}
+        onPointerDown={onHeaderPointerDown}
       >
         <span className="item-folder-title">{data.title || 'Folder'}</span>
       </div>

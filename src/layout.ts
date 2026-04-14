@@ -177,9 +177,20 @@ export function availableSize(
 
 // Fixed slot width — 6 slots at ~500px = ~83px per slot.
 export const SLOT_PX = 500 / 6;
+// Mobile (touch-only) scale: 30% smaller slots.
+export const MOBILE_SCALE = 0.7;
 
-export function slotsForWidth(boardWidthPx: number, depth: number): number {
-  const raw = Math.floor(boardWidthPx / SLOT_PX);
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+}
+
+export function effectiveSlotPx(): number {
+  return isMobileDevice() ? SLOT_PX * MOBILE_SCALE : SLOT_PX;
+}
+
+export function slotsForWidth(boardWidthPx: number, depth: number, slotPx: number = SLOT_PX): number {
+  const raw = Math.floor(boardWidthPx / slotPx);
   // Round down to nearest multiple of 3, clamp to 6–30
   let s = Math.floor(raw / 3) * 3;
   s = Math.max(6, Math.min(30, s));

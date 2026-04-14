@@ -16,8 +16,8 @@ interface Props {
   onEdit: () => void;
   onStartResize: () => void;
   onExitResize: () => void;
-  onMoveStart: (e: React.MouseEvent) => void;
-  onResizeCornerDown: (corner: Corner, ev: React.MouseEvent) => void;
+  onMoveStart: (e: React.PointerEvent) => void;
+  onResizeCornerDown: (corner: Corner, ev: React.PointerEvent) => void;
   searchQuery?: string;
   style?: React.CSSProperties;
   bg?: string;
@@ -70,7 +70,7 @@ export function ItemView({
         data={item.data as FolderData}
         bg={bg || '#ccc'}
         fg={fg || '#000'}
-        onHeaderMouseDown={e => {
+        onHeaderPointerDown={e => {
           if (editMode && !resizeMode && e.button === 0) {
             onMoveStart(e);
           }
@@ -98,7 +98,7 @@ export function ItemView({
     <div
       className={cls}
       style={style}
-      onMouseDown={e => {
+      onPointerDown={e => {
         // Folders: only header drags (handled by FolderItem). Skip here.
         if (isFolder) return;
         if (editMode && !resizeMode && e.button === 0) {
@@ -142,7 +142,7 @@ export function ItemView({
             <div
               key={c}
               className={'corner-handle ' + c + (activeCorner === c ? ' active' : '')}
-              onMouseDown={e => {
+              onPointerDown={e => {
                 e.stopPropagation();
                 e.preventDefault();
                 onResizeCornerDown(c, e);

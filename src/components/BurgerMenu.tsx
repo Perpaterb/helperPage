@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { useStore, migrateState } from '../store';
 import { Tab } from '../types';
@@ -10,8 +10,24 @@ export function BurgerMenu() {
   const [open, setOpen] = useState(false);
   const [editTab, setEditTab] = useState<Tab | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
   const dragIdx = useRef<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Close menu when clicking/tapping outside of it
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (menuRef.current?.contains(t)) return;
+      if (btnRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    // Use capture so we see the event before React's synthetic handlers
+    document.addEventListener('pointerdown', handler, true);
+    return () => document.removeEventListener('pointerdown', handler, true);
+  }, [open]);
 
   const doExport = () => {
     const { editMode, ...rest } = state;
@@ -75,11 +91,11 @@ export function BurgerMenu() {
 
   return (
     <>
-      <button className="burger-btn" onClick={() => setOpen(!open)} title="Menu">
+      <button ref={btnRef} className="burger-btn" onClick={() => setOpen(!open)} title="Menu">
         ☰
       </button>
       {open && (
-        <div className="burger-menu" onMouseLeave={() => setOpen(false)}>
+        <div ref={menuRef} className="burger-menu">
           <button
             onClick={() => {
               dispatch({ type: 'TOGGLE_EDIT' });

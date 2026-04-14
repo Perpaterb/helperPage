@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { useStore } from '../store';
-import { resolveLayout, packItems, availableSize, SLOT_PX } from '../layout';
+import { resolveLayout, packItems, availableSize } from '../layout';
 import { buildVirtualState } from '../virtualState';
 import { useUI, Corner } from '../uiContext';
 import { ItemView } from './ItemView';
@@ -14,9 +14,10 @@ import { startEdgeScroll, stopEdgeScroll, updateEdgeScroll } from '../edgeScroll
 interface Props {
   slotCount: number;
   searchQuery: string;
+  slotPx: number;
 }
 
-export function Container({ slotCount, searchQuery }: Props) {
+export function Container({ slotCount, searchQuery, slotPx }: Props) {
   const { state, dispatch } = useStore();
   const ui = useUI();
   const [editItemId, setEditItemId] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export function Container({ slotCount, searchQuery }: Props) {
   // Bottom 15%: add one row + scroll down every 200ms.
   // Top 15%: scroll up every 200ms. No row removal during drag.
   // After release: unlock rows, grid recalculates to fit content.
-  const beginDrag = (id: string, startEv: React.MouseEvent) => {
+  const beginDrag = (id: string, startEv: React.PointerEvent) => {
     const item = state.items[id];
     if (!item || !gridRef.current) return;
     startEv.preventDefault();
@@ -83,12 +84,12 @@ export function Container({ slotCount, searchQuery }: Props) {
     }
 
     const rect = gridRef.current.getBoundingClientRect();
-    const cellW = SLOT_PX;
-    const slotPx =
+    const cellW = slotPx;
+    const rowH =
       parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
     const gapPx =
       parseFloat(getComputedStyle(gridRef.current).rowGap || getComputedStyle(gridRef.current).gap || '4');
-    const cellH = slotPx + gapPx;
+    const cellH = rowH + gapPx;
     const startX = startEv.clientX;
     const startY = startEv.clientY;
     const startScrollY = window.scrollY;
@@ -150,7 +151,7 @@ export function Container({ slotCount, searchQuery }: Props) {
       }
     }, 200);
 
-    const move = (ev: MouseEvent) => {
+    const move = (ev: PointerEvent) => {
       dragCursorY.current = ev.clientY;
       const { x, y } = computeTarget(ev.clientX, ev.clientY);
       const cur = ui.preview;
@@ -159,10 +160,11 @@ export function Container({ slotCount, searchQuery }: Props) {
       }
     };
 
-    const up = (ev: MouseEvent) => {
+    const up = (ev: PointerEvent) => {
       clearInterval(interval);
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       const { x, y } = computeTarget(ev.clientX, ev.clientY);
       if (isFolder && folderChildren.length > 0) {
         const dx = x - sp.x;
@@ -189,21 +191,22 @@ export function Container({ slotCount, searchQuery }: Props) {
       setDragRowLock(null);
     };
 
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   };
 
   // --- Corner resize ---
-  const beginCornerResize = (id: string, corner: Corner, startEv: React.MouseEvent) => {
+  const beginCornerResize = (id: string, corner: Corner, startEv: React.PointerEvent) => {
     const item = state.items[id];
     if (!item || !gridRef.current) return;
     const cur: SizePos =
       layout.items[id] || item.layouts[slotCount] || { x: 0, y: 0, w: 1, h: 1 };
     const rect = gridRef.current.getBoundingClientRect();
-    const cellW = SLOT_PX;
-    const slotPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
+    const cellW = slotPx;
+    const rowH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-size')) || 40;
     const gapPx = parseFloat(getComputedStyle(gridRef.current).rowGap || getComputedStyle(gridRef.current).gap || '4');
-    const cellH = slotPx + gapPx;
+    const cellH = rowH + gapPx;
     const startX = startEv.clientX;
     const startY = startEv.clientY;
     const startScrollY = window.scrollY;
@@ -211,7 +214,7 @@ export function Container({ slotCount, searchQuery }: Props) {
     ui.setActiveResize({ itemId: id, corner });
     startEdgeScroll();
 
-    const move = (ev: MouseEvent) => {
+    const move = (ev: PointerEvent) => {
       updateEdgeScroll(ev.clientY);
       const scrollDelta = window.scrollY - startScrollY;
       const dxC = Math.round((ev.clientX - startX) / cellW);
@@ -258,13 +261,15 @@ export function Container({ slotCount, searchQuery }: Props) {
       });
     };
     const up = () => {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       stopEdgeScroll();
       ui.setActiveResize(null);
     };
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   };
 
   const itemMatchesSearch = (id: string): boolean => {
@@ -325,7 +330,7 @@ export function Container({ slotCount, searchQuery }: Props) {
   }, [displayItems, displayTotalRows, slotCount]);
 
   const containerStyle: React.CSSProperties = {
-    gridTemplateColumns: `repeat(${slotCount}, ${SLOT_PX}px)`,
+    gridTemplateColumns: `repeat(${slotCount}, ${slotPx}px)`,
     gridTemplateRows: `repeat(${displayTotalRows}, var(--slot-size))`
   };
 
