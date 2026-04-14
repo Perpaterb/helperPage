@@ -820,9 +820,13 @@ body {
   min-height: 100%;
 }
 .crepe-editor .ProseMirror {
-  padding: 6px 10px 6px 40px !important;
+  padding: 6px 10px 6px 76px !important;
   min-height: 60px;
   outline: none;
+}
+.crepe-editor .milkdown-block-handle,
+.crepe-editor .milkdown-block-handle .operation-item {
+  touch-action: none;
 }
 .notes-preview h1,
 .notes-preview h2,
