@@ -494,6 +494,123 @@ body {
   display: block;
 }
 
+/* Folder item */
+.item.type-folder {
+  pointer-events: none; /* only the header and handles capture */
+}
+.item.type-folder .item-content {
+  background: transparent;
+}
+.item-folder {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  pointer-events: none;
+}
+.item-folder-header {
+  flex: 0 0 var(--slot-size);
+  height: var(--slot-size);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 10px 10px 0 0;
+  font-weight: 600;
+  font-size: 13px;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.item.type-folder.edit .item-folder-header {
+  cursor: grab;
+}
+.item.type-folder.edit .item-folder-header:active {
+  cursor: grabbing;
+}
+.item-folder-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-folder-body {
+  flex: 1;
+  opacity: 0.05;
+  border-radius: 0 0 10px 10px;
+  pointer-events: none;
+}
+.item.type-folder .item-actions,
+.item.type-folder .corner-handle,
+.item.type-folder .resize-confirm {
+  pointer-events: auto;
+}
+/* Folders sit under other items so their bodies don't block */
+.item.type-folder {
+  z-index: 0;
+}
+
+/* Sketch item */
+.item-sketch {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+.item-sketch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: rgba(127, 127, 127, 0.15);
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+}
+.item-sketch-title {
+  font-weight: 600;
+  font-size: 12px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.item-sketch-toolbar input[type="color"] {
+  width: 28px;
+  height: 22px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 0;
+  cursor: pointer;
+}
+.item-sketch-toolbar input[type="range"] {
+  width: 60px;
+}
+.item-sketch-toolbar .tb-btn {
+  width: 24px;
+  height: 22px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--fg);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item-sketch-canvas {
+  flex: 1;
+  width: 100%;
+  touch-action: none;
+  background: transparent;
+  cursor: crosshair;
+}
+.item.type-sketch.edit .item-sketch-canvas,
+.item.type-sketch.resize .item-sketch-canvas {
+  pointer-events: none;
+  cursor: grab;
+}
+
 /* Todo item */
 .item-todo {
   display: flex;

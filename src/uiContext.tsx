@@ -7,6 +7,7 @@ export interface DragInfo {
   offsetRow: number;
   w: number;
   h: number;
+  childIds?: string[];
 }
 
 export interface DragPreview {

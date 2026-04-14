@@ -1,4 +1,4 @@
-export type ItemType = 'button' | 'todo' | 'notes';
+export type ItemType = 'button' | 'todo' | 'notes' | 'folder' | 'sketch';
 
 export interface ButtonData {
   text: string;
@@ -26,7 +26,28 @@ export interface NotesData {
   bgDark?: string;
 }
 
-export type ItemData = ButtonData | TodoData | NotesData;
+export interface FolderData {
+  title: string;
+  bgLight?: string;
+  bgDark?: string;
+}
+
+export interface SketchStroke {
+  color: string;
+  width: number;
+  points: number[]; // flattened [x0, y0, x1, y1, ...] in 0-1000 normalized space
+}
+
+export interface SketchData {
+  title?: string;
+  bgLight?: string;
+  bgDark?: string;
+  strokes: SketchStroke[];
+  penColor?: string;
+  penSize?: number;
+}
+
+export type ItemData = ButtonData | TodoData | NotesData | FolderData | SketchData;
 
 export interface SizePos {
   x: number;

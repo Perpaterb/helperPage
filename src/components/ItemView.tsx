@@ -1,7 +1,9 @@
 import { ButtonItem } from '../items/ButtonItem';
 import { TodoItem } from '../items/TodoItem';
 import { NotesItem } from '../items/NotesItem';
-import { Item, ButtonData, TodoData, NotesData } from '../types';
+import { FolderItem } from '../items/FolderItem';
+import { SketchItem } from '../items/SketchItem';
+import { Item, ButtonData, TodoData, NotesData, FolderData, SketchData } from '../types';
 import { useStore } from '../store';
 import { Corner } from '../uiContext';
 
@@ -18,6 +20,8 @@ interface Props {
   onResizeCornerDown: (corner: Corner, ev: React.MouseEvent) => void;
   searchQuery?: string;
   style?: React.CSSProperties;
+  bg?: string;
+  fg?: string;
 }
 
 export function ItemView({
@@ -32,10 +36,13 @@ export function ItemView({
   onMoveStart,
   onResizeCornerDown,
   searchQuery,
-  style
+  style,
+  bg,
+  fg
 }: Props) {
   const { dispatch } = useStore();
   const blocked = editMode || resizeMode;
+  const isFolder = item.type === 'folder';
 
   let inner: React.ReactNode = null;
   if (item.type === 'button') {
@@ -56,6 +63,27 @@ export function ItemView({
         searchQuery={searchQuery}
       />
     );
+  } else if (item.type === 'folder') {
+    inner = (
+      <FolderItem
+        data={item.data as FolderData}
+        bg={bg || '#ccc'}
+        fg={fg || '#000'}
+        onHeaderMouseDown={e => {
+          if (editMode && !resizeMode && e.button === 0) {
+            onMoveStart(e);
+          }
+        }}
+      />
+    );
+  } else if (item.type === 'sketch') {
+    inner = (
+      <SketchItem
+        data={item.data as SketchData}
+        onChange={d => dispatch({ type: 'UPDATE_ITEM_DATA', id: item.id, data: d })}
+        editable={editMode || resizeMode}
+      />
+    );
   }
 
   const cls =
@@ -70,6 +98,8 @@ export function ItemView({
       className={cls}
       style={style}
       onMouseDown={e => {
+        // Folders: only header drags (handled by FolderItem). Skip here.
+        if (isFolder) return;
         if (editMode && !resizeMode && e.button === 0) {
           onMoveStart(e);
         }

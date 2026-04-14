@@ -20,7 +20,8 @@ type Action =
   | { type: 'UPDATE_TAB'; id: string; patch: Partial<Tab> }
   | { type: 'SET_ACTIVE_TAB'; id: string }
   | { type: 'REORDER_TABS'; tabs: Tab[] }
-  | { type: 'MOVE_ITEM_TO_TAB'; id: string; toTab: string; slotCount: number };
+  | { type: 'MOVE_ITEM_TO_TAB'; id: string; toTab: string; slotCount: number }
+  | { type: 'MOVE_FOLDER_WITH_CHILDREN'; folderId: string; slotCount: number; dx: number; dy: number; childIds: string[] };
 
 function reducer(state: AppState, action: Action): AppState {
   const tab = state.activeTab;
@@ -201,23 +202,99 @@ function reducer(state: AppState, action: Action): AppState {
         }
       }
 
+      const dx = targetX - lay.x;
+      const dy = targetY - lay.y;
+
+      // Find children if moving a folder (based on current positions)
+      const childrenToMove: string[] = [];
+      if (it.type === 'folder') {
+        const fBodyTop = lay.y + 1;
+        const fBodyBottom = lay.y + h;
+        const fLeft = lay.x;
+        const fRight = lay.x + w;
+        for (const cid of state.childOrder[fromTab] || []) {
+          if (cid === action.id) continue;
+          const other = state.items[cid];
+          if (!other || other.type === 'folder') continue;
+          const oLay = other.layouts[sc];
+          if (!oLay) continue;
+          if (
+            oLay.x >= fLeft &&
+            oLay.x + oLay.w <= fRight &&
+            oLay.y >= fBodyTop &&
+            oLay.y + oLay.h <= fBodyBottom
+          ) {
+            childrenToMove.push(cid);
+          }
+        }
+      }
+
       // Update item: new parent, set layout at this slot count
-      const newItem = {
+      const newItems = { ...state.items };
+      newItems[action.id] = {
         ...it,
         parentId: toTab,
         layouts: { ...it.layouts, [sc]: { x: targetX, y: targetY, w, h } }
       };
+      // Move children along with folder
+      for (const cid of childrenToMove) {
+        const ch = state.items[cid];
+        if (!ch) continue;
+        const cLay = ch.layouts[sc];
+        if (!cLay) continue;
+        newItems[cid] = {
+          ...ch,
+          parentId: toTab,
+          layouts: {
+            ...ch.layouts,
+            [sc]: { ...cLay, x: Math.max(0, cLay.x + dx), y: Math.max(0, cLay.y + dy) }
+          }
+        };
+      }
 
-      // Update childOrder: remove from source, add to target
+      // Update childOrder: remove moved items from source, add to target
+      const movedIds = [action.id, ...childrenToMove];
       const newOrder = { ...state.childOrder };
-      newOrder[fromTab] = (newOrder[fromTab] || []).filter(c => c !== action.id);
-      newOrder[toTab] = [...(newOrder[toTab] || []), action.id];
+      newOrder[fromTab] = (newOrder[fromTab] || []).filter(c => !movedIds.includes(c));
+      newOrder[toTab] = [...(newOrder[toTab] || []), ...movedIds];
 
       return {
         ...state,
-        items: { ...state.items, [action.id]: newItem },
+        items: newItems,
         childOrder: newOrder
       };
+    }
+    case 'MOVE_FOLDER_WITH_CHILDREN': {
+      const folder = state.items[action.folderId];
+      if (!folder) return state;
+      const sc = action.slotCount;
+      const newItems = { ...state.items };
+      // Update folder
+      const fLay = folder.layouts[sc];
+      if (fLay) {
+        newItems[action.folderId] = {
+          ...folder,
+          layouts: {
+            ...folder.layouts,
+            [sc]: { ...fLay, x: Math.max(0, fLay.x + action.dx), y: Math.max(0, fLay.y + action.dy) }
+          }
+        };
+      }
+      // Update children
+      for (const cid of action.childIds) {
+        const ch = state.items[cid];
+        if (!ch) continue;
+        const cLay = ch.layouts[sc];
+        if (!cLay) continue;
+        newItems[cid] = {
+          ...ch,
+          layouts: {
+            ...ch.layouts,
+            [sc]: { ...cLay, x: Math.max(0, cLay.x + action.dx), y: Math.max(0, cLay.y + action.dy) }
+          }
+        };
+      }
+      return { ...state, items: newItems, lastMovedItem: action.folderId };
     }
     default:
       return state;
@@ -230,6 +307,12 @@ function defaultData(t: ItemType): any {
   }
   if (t === 'todo') {
     return { title: 'To-do', entries: [], bgLight: '#ffffff', bgDark: '#1f2430' };
+  }
+  if (t === 'folder') {
+    return { title: 'Folder', bgLight: '#c8e0ff', bgDark: '#2a3a55' };
+  }
+  if (t === 'sketch') {
+    return { title: 'Sketch', strokes: [], bgLight: '#ffffff', bgDark: '#1f2430', penColor: '#000000', penSize: 3 };
   }
   return { title: 'Notes', markdown: '# Notes\n\nWrite here...', bgLight: '#ffffff', bgDark: '#1f2430' };
 }

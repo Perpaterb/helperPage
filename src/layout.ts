@@ -57,11 +57,14 @@ export function resolveLayout(
     const h = Math.max(1, lay.h);
     let x = Math.max(0, Math.min(lay.x, slotCount - w));
     let y = Math.max(0, lay.y);
+    const isFolder = it.type === 'folder';
+    // Folders: only the header row (top) occupies slots; body is transparent
+    const occH = isFolder ? 1 : h;
     for (let attempt = 0; attempt < 200; attempt++) {
-      if (isFree(x, y, w, h)) break;
+      if (isFree(x, y, w, occH)) break;
       y++;
     }
-    mark(x, y, w, h);
+    mark(x, y, w, occH);
     items[cid] = { x, y, w, h };
   };
 
@@ -85,8 +88,10 @@ export function resolveLayout(
     const last = sizes[sizes.length - 1];
     const w = last?.w ? Math.min(last.w, slotCount) : 3;
     const h = last?.h || 3;
-    const { x, y } = findNext(w, h);
-    mark(x, y, w, h);
+    const isFolder = it.type === 'folder';
+    const occH = isFolder ? 1 : h;
+    const { x, y } = findNext(w, occH);
+    mark(x, y, w, occH);
     items[cid] = { x, y, w, h };
   }
 

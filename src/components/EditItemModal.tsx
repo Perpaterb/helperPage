@@ -1,6 +1,6 @@
 import { useStore } from '../store';
 import { Modal } from './Modal';
-import { ButtonData, NotesData, TodoData } from '../types';
+import { ButtonData, NotesData, TodoData, FolderData, SketchData } from '../types';
 import { resolveBg } from '../colors';
 import { ColorPicker } from './ColorPicker';
 
@@ -113,6 +113,34 @@ export function EditItemModal({
               rows={10}
               value={(item.data as NotesData).markdown}
               onChange={e => update({ markdown: e.target.value })}
+            />
+          </label>
+          <ColorField />
+        </>
+      )}
+      {item.type === 'folder' && (
+        <>
+          <label>
+            Title
+            <input
+              type="text"
+              value={(item.data as FolderData).title}
+              onChange={e => update({ title: e.target.value })}
+              onFocus={selectAll}
+            />
+          </label>
+          <ColorField />
+        </>
+      )}
+      {item.type === 'sketch' && (
+        <>
+          <label>
+            Title
+            <input
+              type="text"
+              value={(item.data as SketchData).title || ''}
+              onChange={e => update({ title: e.target.value })}
+              onFocus={selectAll}
             />
           </label>
           <ColorField />

@@ -26,6 +26,16 @@ export function AddItemModal({
           Notes
           <small>Markdown editor</small>
         </button>
+        <button className="add-item-btn" onClick={() => onPick('folder')}>
+          <div className="add-item-icon">📁</div>
+          Folder
+          <small>Group items</small>
+        </button>
+        <button className="add-item-btn" onClick={() => onPick('sketch')}>
+          <div className="add-item-icon">🎨</div>
+          Sketch
+          <small>Freehand drawing</small>
+        </button>
       </div>
     </Modal>
   );

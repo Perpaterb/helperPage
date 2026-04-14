@@ -58,6 +58,30 @@ export function Container({ slotCount, searchQuery }: Props) {
     if (!item || !gridRef.current) return;
     startEv.preventDefault();
     const sp: SizePos = layout.items[id] || { x: 0, y: 0, w: 3, h: 3 };
+    const isFolder = item.type === 'folder';
+
+    // For folders: find all items whose rect is fully within the folder body
+    const folderChildren: { id: string; sp: SizePos }[] = [];
+    if (isFolder) {
+      const fBodyTop = sp.y + 1; // below header
+      const fBodyBottom = sp.y + sp.h;
+      const fLeft = sp.x;
+      const fRight = sp.x + sp.w;
+      for (const [otherId, otherSp] of Object.entries(layout.items)) {
+        if (otherId === id) continue;
+        const other = state.items[otherId];
+        if (!other || other.type === 'folder') continue;
+        if (
+          otherSp.x >= fLeft &&
+          otherSp.x + otherSp.w <= fRight &&
+          otherSp.y >= fBodyTop &&
+          otherSp.y + otherSp.h <= fBodyBottom
+        ) {
+          folderChildren.push({ id: otherId, sp: otherSp });
+        }
+      }
+    }
+
     const rect = gridRef.current.getBoundingClientRect();
     const cellW = SLOT_PX;
     const slotPx =
@@ -79,7 +103,8 @@ export function Container({ slotCount, searchQuery }: Props) {
       offsetCol: 0,
       offsetRow: 0,
       w: sp.w,
-      h: sp.h
+      h: sp.h,
+      childIds: isFolder ? folderChildren.map(c => c.id) : undefined
     });
     ui.setPreview({ parentId: state.activeTab, x: sp.x, y: sp.y });
     dragCursorY.current = startEv.clientY;
@@ -139,12 +164,25 @@ export function Container({ slotCount, searchQuery }: Props) {
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
       const { x, y } = computeTarget(ev.clientX, ev.clientY);
-      dispatch({
-        type: 'SET_ITEM_LAYOUT',
-        id,
-        slotCount,
-        sp: { x, y, w: sp.w, h: sp.h }
-      });
+      if (isFolder && folderChildren.length > 0) {
+        const dx = x - sp.x;
+        const dy = y - sp.y;
+        dispatch({
+          type: 'MOVE_FOLDER_WITH_CHILDREN',
+          folderId: id,
+          slotCount,
+          dx,
+          dy,
+          childIds: folderChildren.map(c => c.id)
+        });
+      } else {
+        dispatch({
+          type: 'SET_ITEM_LAYOUT',
+          id,
+          slotCount,
+          sp: { x, y, w: sp.w, h: sp.h }
+        });
+      }
       ui.setDrag(null);
       ui.setPreview(null);
       // Unlock rows — grid recalculates to fit content on next render
@@ -305,6 +343,14 @@ export function Container({ slotCount, searchQuery }: Props) {
           ui.activeResize?.itemId === id ? ui.activeResize.corner : null;
         const bg = resolveBg(item.data as any, state.darkMode);
         const fg = textColorFor(bg);
+        const isFolder = item.type === 'folder';
+        const style: React.CSSProperties = {
+          gridColumn: `${sp.x + 1} / span ${sp.w}`,
+          gridRow: `${sp.y + 1} / span ${sp.h}`,
+          ...(isFolder
+            ? { background: 'transparent', border: 'none', boxShadow: 'none' }
+            : { background: bg, color: fg })
+        };
         return (
           <ItemView
             key={id}
@@ -319,12 +365,9 @@ export function Container({ slotCount, searchQuery }: Props) {
             onMoveStart={e => beginDrag(id, e)}
             onResizeCornerDown={(corner, ev) => beginCornerResize(id, corner, ev)}
             searchQuery={searchQuery}
-            style={{
-              gridColumn: `${sp.x + 1} / span ${sp.w}`,
-              gridRow: `${sp.y + 1} / span ${sp.h}`,
-              background: bg,
-              color: fg
-            }}
+            style={style}
+            bg={bg}
+            fg={fg}
           />
         );
       })}
