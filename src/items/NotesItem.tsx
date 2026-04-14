@@ -167,6 +167,7 @@ export function NotesItem({
         <button className="notes-mode-btn" onClick={() => setEditing(!editing)}>
           {editing ? 'Preview' : 'Code'}
         </button>
+        <span className="item-notes-spacer" />
       </div>
       {editing && (
         <div className="notes-toolbar">

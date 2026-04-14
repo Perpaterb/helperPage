@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { TodoData } from '../types';
 
@@ -14,6 +14,9 @@ export function TodoItem({
   editMode?: boolean;
 }) {
   const [draft, setDraft] = useState('');
+  const dragIdx = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
   const add = () => {
     const text = draft.trim();
     if (!text) return;
@@ -29,17 +32,33 @@ export function TodoItem({
   const del = (id: string) => {
     onChange({ ...data, entries: data.entries.filter(e => e.id !== id) });
   };
-  const move = (idx: number, delta: number) => {
+
+  const handleDragStart = (idx: number) => {
+    dragIdx.current = idx;
+  };
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  };
+  const handleDrop = (idx: number) => {
+    const from = dragIdx.current;
+    dragIdx.current = null;
+    setDragOverIdx(null);
+    if (from == null || from === idx) return;
     const next = [...data.entries];
-    const to = idx + delta;
-    if (to < 0 || to >= next.length) return;
-    const [item] = next.splice(idx, 1);
-    next.splice(to, 0, item);
+    const [moved] = next.splice(from, 1);
+    next.splice(idx, 0, moved);
     onChange({ ...data, entries: next });
   };
+  const handleDragEnd = () => {
+    dragIdx.current = null;
+    setDragOverIdx(null);
+  };
+
   const q = searchQuery?.toLowerCase() || '';
   const matches = (text: string) => !q || text.toLowerCase().includes(q);
   const stop = (e: React.MouseEvent | React.PointerEvent) => e.stopPropagation();
+
   return (
     <div className="item-todo" onMouseDown={e => e.stopPropagation()}>
       <div className="item-todo-title">{data.title || 'To-do'}</div>
@@ -47,30 +66,21 @@ export function TodoItem({
         {data.entries.map((e, idx) => (
           <div
             key={e.id}
-            className={'todo-row' + (e.done ? ' done' : '') + (editMode ? ' reorder' : '')}
+            className={
+              'todo-row' +
+              (e.done ? ' done' : '') +
+              (editMode ? ' reorder' : '') +
+              (dragOverIdx === idx ? ' drag-over' : '')
+            }
             style={q && !matches(e.text) ? { opacity: 0.2 } : undefined}
+            draggable={editMode}
+            onDragStart={editMode ? () => handleDragStart(idx) : undefined}
+            onDragOver={editMode ? ev => handleDragOver(ev, idx) : undefined}
+            onDrop={editMode ? () => handleDrop(idx) : undefined}
+            onDragEnd={editMode ? handleDragEnd : undefined}
           >
             {editMode ? (
-              <>
-                <button
-                  className="todo-reorder"
-                  title="Move up"
-                  disabled={idx === 0}
-                  onMouseDown={stop}
-                  onClick={ev => { stop(ev); move(idx, -1); }}
-                >
-                  ▲
-                </button>
-                <button
-                  className="todo-reorder"
-                  title="Move down"
-                  disabled={idx === data.entries.length - 1}
-                  onMouseDown={stop}
-                  onClick={ev => { stop(ev); move(idx, 1); }}
-                >
-                  ▼
-                </button>
-              </>
+              <span className="todo-grip" title="Drag to reorder">⠿</span>
             ) : (
               <input type="checkbox" checked={e.done} onChange={() => toggle(e.id)} />
             )}
