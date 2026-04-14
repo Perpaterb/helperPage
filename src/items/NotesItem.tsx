@@ -197,11 +197,14 @@ export function NotesItem({
         />
       ) : (
         <>
-          <div
-            className="notes-preview"
-            onDoubleClick={() => setEditing(true)}
-            title="Double-click to edit"
-          >
+          <textarea
+            className="notes-editor notes-editor-preview"
+            value={data.markdown}
+            onChange={e => onChange({ ...data, markdown: e.target.value })}
+            spellCheck={false}
+            placeholder="Write markdown here…"
+          />
+          <div className="notes-preview" title="Live preview">
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkDirective, remarkCallouts]}
               rehypePlugins={[rehypeRaw]}
@@ -209,47 +212,8 @@ export function NotesItem({
               {prepared}
             </ReactMarkdown>
           </div>
-          <PreviewAppend data={data} onChange={onChange} />
         </>
       )}
     </div>
-  );
-}
-
-function PreviewAppend({
-  data,
-  onChange
-}: {
-  data: NotesData;
-  onChange: (d: NotesData) => void;
-}) {
-  const [draft, setDraft] = useState('');
-  const append = () => {
-    const text = draft;
-    if (!text.trim()) {
-      setDraft('');
-      return;
-    }
-    const cur = data.markdown || '';
-    const sep = cur.length === 0 || cur.endsWith('\n') ? '' : '\n';
-    onChange({ ...data, markdown: cur + sep + text + '\n' });
-    setDraft('');
-  };
-  return (
-    <form
-      className="notes-append"
-      onSubmit={e => {
-        e.preventDefault();
-        append();
-      }}
-    >
-      <input
-        type="text"
-        placeholder="Add a line… (markdown: ## heading, **bold**, - list)"
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-      />
-      <button type="submit" title="Append">+</button>
-    </form>
   );
 }

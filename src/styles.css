@@ -802,28 +802,11 @@ body {
   overflow: auto;
   padding: 0 4px;
 }
-.notes-append {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
-}
-.notes-append input {
-  flex: 1;
-  min-width: 0;
-  padding: 4px 8px;
+.notes-editor-preview {
+  flex: 0 0 auto;
+  max-height: 40%;
+  min-height: 60px;
   border-radius: 6px;
-  border: 1px solid var(--card-border);
-  background: var(--bg);
-  color: var(--fg);
-  font-size: 12px;
-}
-.notes-append button {
-  width: 28px;
-  border-radius: 6px;
-  background: var(--accent);
-  color: #fff;
-  border: 0;
-  cursor: pointer;
 }
 .notes-preview h1,
 .notes-preview h2,
