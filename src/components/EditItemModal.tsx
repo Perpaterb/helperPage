@@ -48,6 +48,25 @@ export function EditItemModal({
   );
 
   const selectAll = (e: React.FocusEvent<HTMLInputElement>) => e.target.select();
+  const closeOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onClose();
+    }
+  };
+
+  const exportNotesMd = () => {
+    const d = item.data as NotesData;
+    const title = d.title || 'notes';
+    const safe = title.replace(/[^a-z0-9_\- ]/gi, '').trim() || 'notes';
+    const blob = new Blob([d.markdown || ''], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safe + '.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <Modal title={`Edit ${item.type}`} onClose={onClose}>
@@ -60,6 +79,7 @@ export function EditItemModal({
               value={(item.data as ButtonData).text}
               onChange={e => update({ text: e.target.value })}
               onFocus={selectAll}
+              onKeyDown={closeOnEnter}
             />
           </label>
           <label>
@@ -69,6 +89,7 @@ export function EditItemModal({
               value={(item.data as ButtonData).url}
               onChange={e => update({ url: e.target.value })}
               onFocus={selectAll}
+              onKeyDown={closeOnEnter}
             />
           </label>
           <label className="checkbox-label">
@@ -91,6 +112,7 @@ export function EditItemModal({
               value={(item.data as TodoData).title}
               onChange={e => update({ title: e.target.value })}
               onFocus={selectAll}
+              onKeyDown={closeOnEnter}
             />
           </label>
           <ColorField />
@@ -105,6 +127,7 @@ export function EditItemModal({
               value={(item.data as NotesData).title}
               onChange={e => update({ title: e.target.value })}
               onFocus={selectAll}
+              onKeyDown={closeOnEnter}
             />
           </label>
           <label>
@@ -115,6 +138,9 @@ export function EditItemModal({
               onChange={e => update({ markdown: e.target.value })}
             />
           </label>
+          <button className="move-tab-btn" onClick={exportNotesMd}>
+            ⇩ Export as Markdown
+          </button>
           <ColorField />
         </>
       )}
@@ -127,6 +153,7 @@ export function EditItemModal({
               value={(item.data as FolderData).title}
               onChange={e => update({ title: e.target.value })}
               onFocus={selectAll}
+              onKeyDown={closeOnEnter}
             />
           </label>
           <ColorField />
@@ -141,6 +168,7 @@ export function EditItemModal({
               value={(item.data as SketchData).title || ''}
               onChange={e => update({ title: e.target.value })}
               onFocus={selectAll}
+              onKeyDown={closeOnEnter}
             />
           </label>
           <ColorField />

@@ -391,9 +391,6 @@ body {
   gap: 4px;
   z-index: 5;
 }
-.item-actions.edit-actions-offset {
-  right: 36px;
-}
 .icon-btn {
   width: 24px;
   height: 24px;

@@ -33,6 +33,12 @@ export function EditTabModal({
   };
 
   const selectAll = (e: React.FocusEvent<HTMLInputElement>) => e.target.select();
+  const closeOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onClose();
+    }
+  };
 
   return (
     <Modal title="Edit tab" onClose={onClose}>
@@ -43,6 +49,7 @@ export function EditTabModal({
           value={tab.title}
           onChange={e => update({ title: e.target.value })}
           onFocus={selectAll}
+          onKeyDown={closeOnEnter}
         />
       </label>
       <div className="field-block">
