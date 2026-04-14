@@ -1,7 +1,0 @@
-services:
-  helperpage:
-    build: .
-    container_name: helperpage
-    ports:
-      - "${HP_PORT:-8080}:80"
-    restart: unless-stopped

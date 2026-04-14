@@ -18,15 +18,20 @@
 - Never amend or force-push without explicit instruction — always create new commits so history is recoverable.
 
 ## Environment
-- This project is **Docker-only**. Never run `npm`, `node`, `vite`, or `tsc` on the host. All install / build / typecheck / run steps go through `docker compose`.
-  - Start: `./start.sh` — finds first available port ≥ 8000, builds and runs
-  - Build only: `docker compose build`
-  - Run on specific port: `HP_PORT=8080 docker compose up -d`
-  - Stop: `docker compose down`
+- Plain Node + Vite. No Docker.
+  - Install: `npm install`
+  - Dev server: `npm run dev`
+  - Build: `npm run build`
+  - Preview built output: `npm run preview`
+
+## Deployment
+- Production is GitHub Pages at https://perpaterb.github.io/helperPage/
+- CI/CD is in `.github/workflows/deploy.yml` — every push to `main` triggers a build and publishes the `dist/` folder to Pages.
+- `vite.config.ts` reads `BASE_PATH` env var; CI sets it to `/helperPage/`. Local defaults to `/`.
 
 ## Workflow summary
 1. User sends a prompt.
 2. Create or switch to an appropriate feature branch.
-3. Make the changes, verify via `docker compose build`.
+3. Make the changes, verify via `npm run build`.
 4. Commit with a clear message (no Claude attribution).
 5. Report back to the user.
