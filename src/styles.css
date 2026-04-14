@@ -828,6 +828,11 @@ body {
 .crepe-editor .milkdown-block-handle .operation-item {
   touch-action: none;
 }
+/* Crepe's block handle has a 10px offset from the block; shift it back
+   toward the text so the + button doesn't clip off the left edge. */
+.crepe-editor .milkdown-block-handle {
+  margin-left: 10px;
+}
 /* When the notes item is narrower than 6 slots, there's no room for
    the block handle, so hide it and drop the left padding. */
 .item[data-slot-w="1"] .crepe-editor .ProseMirror,
