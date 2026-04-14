@@ -22,6 +22,7 @@ interface Props {
   style?: React.CSSProperties;
   bg?: string;
   fg?: string;
+  slotW?: number;
 }
 
 export function ItemView({
@@ -38,7 +39,8 @@ export function ItemView({
   searchQuery,
   style,
   bg,
-  fg
+  fg,
+  slotW
 }: Props) {
   const { dispatch } = useStore();
   const blocked = editMode || resizeMode;
@@ -106,6 +108,7 @@ export function ItemView({
         }
       }}
       data-item-id={item.id}
+      data-slot-w={slotW}
     >
       <div className={'item-content' + (blocked ? ' blocked' : '')}>{inner}</div>
 

@@ -820,13 +820,29 @@ body {
   min-height: 100%;
 }
 .crepe-editor .ProseMirror {
-  padding: 6px 10px 6px 76px !important;
+  padding: 6px 6px 6px 64px !important;
   min-height: 60px;
   outline: none;
 }
 .crepe-editor .milkdown-block-handle,
 .crepe-editor .milkdown-block-handle .operation-item {
   touch-action: none;
+}
+/* When the notes item is narrower than 6 slots, there's no room for
+   the block handle, so hide it and drop the left padding. */
+.item[data-slot-w="1"] .crepe-editor .ProseMirror,
+.item[data-slot-w="2"] .crepe-editor .ProseMirror,
+.item[data-slot-w="3"] .crepe-editor .ProseMirror,
+.item[data-slot-w="4"] .crepe-editor .ProseMirror,
+.item[data-slot-w="5"] .crepe-editor .ProseMirror {
+  padding-left: 6px !important;
+}
+.item[data-slot-w="1"] .crepe-editor .milkdown-block-handle,
+.item[data-slot-w="2"] .crepe-editor .milkdown-block-handle,
+.item[data-slot-w="3"] .crepe-editor .milkdown-block-handle,
+.item[data-slot-w="4"] .crepe-editor .milkdown-block-handle,
+.item[data-slot-w="5"] .crepe-editor .milkdown-block-handle {
+  display: none !important;
 }
 .notes-preview h1,
 .notes-preview h2,

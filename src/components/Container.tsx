@@ -373,6 +373,7 @@ export function Container({ slotCount, searchQuery, slotPx }: Props) {
             style={style}
             bg={bg}
             fg={fg}
+            slotW={sp.w}
           />
         );
       })}
