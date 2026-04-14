@@ -114,7 +114,7 @@ export function ItemView({
           <button
             className="icon-btn"
             title="Edit"
-            onMouseDown={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation();
               onEdit();
@@ -125,7 +125,7 @@ export function ItemView({
           <button
             className="icon-btn"
             title="Resize"
-            onMouseDown={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation();
               onStartResize();
@@ -151,7 +151,7 @@ export function ItemView({
           ))}
           <button
             className="resize-confirm"
-            onMouseDown={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             onClick={e => {
               e.stopPropagation();
               onExitResize();
