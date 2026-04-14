@@ -601,6 +601,11 @@ body {
   align-items: center;
   justify-content: center;
 }
+.item-sketch-toolbar .tb-btn-wide {
+  width: auto;
+  padding: 0 10px;
+  font-weight: 500;
+}
 .item-sketch-canvas {
   flex: 1;
   width: 100%;

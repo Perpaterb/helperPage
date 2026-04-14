@@ -56,7 +56,12 @@ export function SketchItem({
     return d;
   };
 
-  const clear = () => onChange({ ...data, strokes: [] });
+  const clear = () => {
+    if (data.strokes.length === 0) return;
+    if (window.confirm('Clear all strokes? This cannot be undone.')) {
+      onChange({ ...data, strokes: [] });
+    }
+  };
   const undo = () => onChange({ ...data, strokes: data.strokes.slice(0, -1) });
 
   return (
@@ -78,7 +83,7 @@ export function SketchItem({
           title="Pen size"
         />
         <button className="tb-btn" onClick={undo} title="Undo">↶</button>
-        <button className="tb-btn" onClick={clear} title="Clear">✕</button>
+        <button className="tb-btn tb-btn-wide" onClick={clear} title="Clear all strokes">Clear</button>
       </div>
       <svg
         ref={svgRef}
