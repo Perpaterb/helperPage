@@ -95,7 +95,13 @@ export function resolveLayout(
     items[cid] = { x, y, w, h };
   }
 
-  return { items, totalRows: occupied.length };
+  // totalRows must account for the full visual height of every item,
+  // including folder bodies whose rows aren't marked as occupied.
+  let maxRow = occupied.length;
+  for (const sp of Object.values(items)) {
+    maxRow = Math.max(maxRow, sp.y + sp.h);
+  }
+  return { items, totalRows: maxRow };
 }
 
 // Pack a filtered list of items top-left (preserving w×h).
